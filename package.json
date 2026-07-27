@@ -1,0 +1,6 @@
+{
+  "name": "lexai-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "LexAI legal research assistant — static frontend + Gemini API backend."
+}
