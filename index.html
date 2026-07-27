@@ -688,7 +688,7 @@ async function callClaude(threadMessages){
     text = data.content.filter(b => b.type === "text").map(b => b.text).join("\n");
   }
   return {
-    text: text || "I couldn't generate a response just now. Please try rephrasing your question.",
+    text: text || (data?.error ? `Lex couldn't generate a response: ${data.error}` : "I couldn't generate a response just now. Please try rephrasing your question."),
     thinking: data?.thinking || "",
   };
 }
