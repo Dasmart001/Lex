@@ -28,7 +28,9 @@
   .app{ display:flex; height:100dvh; width:100%; overflow:hidden; position:relative; }
 
   /* ================= SIDEBAR (Claude-style) ================= */
-  .sidebar{ width:264px; flex-shrink:0; background:var(--bg); border-right:1px solid var(--line); display:flex; flex-direction:column; height:100%; }
+  .sidebar{ width:264px; flex-shrink:0; background:var(--bg); border-right:1px solid var(--line); display:flex; flex-direction:column; height:100%; overflow:hidden; transition:width .2s ease, border-color .2s ease, opacity .15s ease; }
+  .sidebar.closed{ width:0; border-right-color:transparent; opacity:0; }
+  .sidebar.closed > *{ pointer-events:none; }
 
   .sb-head{ display:flex; align-items:center; justify-content:space-between; padding:18px 14px 12px 16px; }
   .sb-brand{ display:flex; align-items:center; gap:10px; }
@@ -109,10 +111,10 @@
   .home{ flex:1; overflow-y:auto; display:flex; flex-direction:column; align-items:center; padding:5vh 20px 40px 20px; }
   .home-inner{ width:100%; max-width:640px; margin:auto 0; }
 
-  .home-mark{ text-align:center; font-size:26px; margin-bottom:14px; }
-  .home-title{ font-family:'Libre Caslon Text',serif; font-size:clamp(26px,5vw,36px); text-align:center; margin-bottom:10px; font-weight:400; line-height:1.2; }
+  .home-greeting{ display:flex; align-items:center; justify-content:center; gap:14px; margin-bottom:28px; flex-wrap:wrap; }
+  .home-mark-icon{ flex-shrink:0; }
+  .home-title{ font-family:'Libre Caslon Text',serif; font-size:clamp(24px,5vw,34px); font-weight:400; line-height:1.2; }
   .home-title em{ font-style:italic; }
-  .home-sub{ font-size:14px; text-align:center; color:var(--dim); margin-bottom:30px; }
 
   .composer{ display:flex; flex-direction:column; gap:10px; border:1.5px solid var(--ink); border-radius:16px; background:var(--bg); padding:14px 16px; }
   .composer-row{ display:flex; gap:10px; align-items:flex-end; }
@@ -126,6 +128,8 @@
   .attach-btn:hover{ background:var(--hover); border-color:var(--ink); }
   .voice-btn{ width:34px; height:34px; border-radius:50%; background:var(--ink); color:var(--inv); border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:opacity .12s; flex-shrink:0; }
   .voice-btn:hover{ opacity:.82; }
+  .voice-btn.listening{ animation:voicePulse 1s ease-in-out infinite; }
+  @keyframes voicePulse{ 0%,100%{ box-shadow:0 0 0 0 rgba(0,0,0,0.25); } 50%{ box-shadow:0 0 0 6px rgba(0,0,0,0); } }
   .send-btn{
     flex-shrink:0; background:var(--ink); color:var(--inv); border:none; border-radius:50%; width:34px; height:34px;
     display:flex; align-items:center; justify-content:center; cursor:pointer; transition:transform .1s ease, opacity .12s;
@@ -134,10 +138,16 @@
   .send-btn:active:not(:disabled){ transform:scale(0.9); }
   .send-btn:disabled{ opacity:.3; cursor:not-allowed; }
 
-  .quick-list{ display:flex; flex-direction:column; gap:2px; margin-bottom:16px; }
-  .quick-row{ display:flex; align-items:center; gap:13px; padding:11px 14px; border-radius:11px; cursor:pointer; font-size:14px; color:var(--ink); transition:background .12s; }
-  .quick-row:hover{ background:var(--hover); }
-  .quick-row svg{ color:var(--dim); flex-shrink:0; }
+  .chip-row{ display:flex; gap:9px; flex-wrap:wrap; justify-content:center; margin-top:22px; }
+  .chip-row-center{ display:flex; justify-content:center; margin-top:9px; }
+  .chip{
+    display:flex; align-items:center; gap:7px; padding:9px 15px; border:1px solid var(--line); border-radius:20px;
+    font-size:13px; color:var(--dim); cursor:pointer; background:var(--bg); transition:border-color .12s, color .12s, background .12s;
+  }
+  .chip:hover{ border-color:var(--ink); color:var(--ink); background:var(--hover); }
+  .chip svg{ flex-shrink:0; }
+  .chip.pick{ color:var(--dim); }
+  .chip.pick svg{ color:var(--faint); }
 
   /* ---- THREAD VIEW ---- */
   .thread-view{ flex:1; overflow-y:auto; padding:8px 24px 8px 24px; }
@@ -190,8 +200,30 @@
 
   .thinking-row{ display:flex; align-items:center; gap:12px; padding:6px 0 22px 0; }
   .gavel-loader{ width:18px; height:18px; color:var(--ink); flex-shrink:0; }
-  .gavel-loader svg{ display:block; animation:gavelStrike .85s ease-in-out infinite; transform-origin:32% 88%; }
-  @keyframes gavelStrike{ 0%,100%{ transform:rotate(-10deg); } 45%{ transform:rotate(9deg); } 55%{ transform:rotate(9deg); } }
+  .gavel-loader svg{ display:block; animation:gavelStrike 1.35s cubic-bezier(.45,0,.2,1) infinite; transform-origin:30% 88%; }
+  @keyframes gavelStrike{
+    0%{ transform:rotate(-16deg); }
+    14%{ transform:rotate(9deg); }
+    22%{ transform:rotate(5deg); }
+    72%{ transform:rotate(5deg); }
+    100%{ transform:rotate(-16deg); }
+  }
+
+  .think-block{ margin-bottom:16px; }
+  .think-toggle{
+    display:flex; align-items:center; gap:6px; background:transparent; border:none; color:var(--faint);
+    font-family:'Space Mono',monospace; font-size:11px; letter-spacing:.02em; cursor:pointer; padding:4px 0;
+  }
+  .think-toggle:hover{ color:var(--dim); }
+  .think-toggle svg{ transition:transform .15s ease; flex-shrink:0; }
+  .think-block.open .think-toggle svg{ transform:rotate(90deg); }
+  .think-body{
+    display:none; margin-top:8px; padding-left:12px; border-left:2px solid var(--line);
+    font-size:13px; line-height:1.65; color:var(--dim);
+  }
+  .think-block.open .think-body{ display:block; }
+  .think-body p{ margin:0 0 10px 0; }
+  .think-body p:last-child{ margin-bottom:0; }
   .thinking-label{ font-family:'Space Mono',monospace; font-size:11px; color:var(--faint); letter-spacing:.03em; }
   @keyframes spin{ to{ transform:rotate(360deg); } }
 
@@ -213,7 +245,6 @@
   }
   @media(max-width:420px){
     .home-title{ font-size:21px; }
-    .home-sub{ font-size:12.5px; margin-bottom:24px; }
   }
 </style>
 </head>
@@ -238,7 +269,7 @@
         <button class="icon-btn" title="Search">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         </button>
-        <button class="icon-btn menu-btn" id="menuBtn" title="Close">
+        <button class="icon-btn" id="menuBtn" title="Close sidebar">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="9" y1="4" x2="9" y2="20"/></svg>
         </button>
       </div>
@@ -335,7 +366,7 @@
 
   <div class="main">
     <div class="topbar" id="topbar">
-      <button class="icon-btn menu-btn" id="openMenuBtn">
+      <button class="icon-btn" id="openMenuBtn" title="Open sidebar">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
       <div class="thread-title" id="threadTitle"></div>
@@ -345,23 +376,20 @@
     <!-- HOME -->
     <div class="home" id="home">
       <div class="home-inner">
-        <div class="home-mark">
-          <svg width="30" height="30" viewBox="0 0 36 36" fill="currentColor" style="margin:0 auto;display:block;">
+        <div class="home-greeting">
+          <svg width="26" height="26" viewBox="0 0 36 36" fill="currentColor" class="home-mark-icon">
             <g transform="rotate(-38 18 15)">
               <rect x="9" y="4" width="17" height="8" rx="2.6"/>
               <rect x="14.7" y="12" width="5.6" height="17" rx="2.6"/>
             </g>
             <rect x="5" y="29.5" width="15" height="4.2" rx="2.1"/>
           </svg>
+          <span class="home-title serif" id="homeTitle"></span>
         </div>
-        <div class="home-title serif" id="homeTitle"></div>
-        <div class="home-sub">Case principles, statutes, doctrine, procedure — ask as you would a colleague.</div>
-
-        <div class="quick-list" id="suggestionGrid"></div>
 
         <div class="composer" id="homeComposer">
           <div class="composer-row">
-            <textarea id="homeInput" rows="1" placeholder="e.g. what constitutes frustration of a contract?"></textarea>
+            <textarea id="homeInput" rows="1" placeholder="How can Lex help you today?"></textarea>
           </div>
           <div class="composer-foot">
             <span class="model-pill">Lex 1.0</span>
@@ -369,7 +397,7 @@
               <button class="attach-btn" title="Attach image">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2.5"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5-9 9"/></svg>
               </button>
-              <button class="voice-btn" title="Voice">
+              <button class="voice-btn" id="homeVoiceBtn" title="Voice input">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="10" x2="5" y2="14"/><line x1="9" y1="6" x2="9" y2="18"/><line x1="13" y1="3" x2="13" y2="21"/><line x1="17" y1="7" x2="17" y2="17"/><line x1="21" y1="10" x2="21" y2="14"/></svg>
               </button>
               <button class="send-btn" id="homeSendBtn" disabled>
@@ -378,6 +406,9 @@
             </div>
           </div>
         </div>
+
+        <div class="chip-row" id="suggestionGrid"></div>
+        <div class="chip-row-center" id="suggestionPick"></div>
       </div>
     </div>
 
@@ -398,7 +429,7 @@
               <button class="attach-btn" title="Attach image">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2.5"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5-9 9"/></svg>
               </button>
-              <button class="voice-btn" title="Voice">
+              <button class="voice-btn" id="followVoiceBtn" title="Voice input">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="10" x2="5" y2="14"/><line x1="9" y1="6" x2="9" y2="18"/><line x1="13" y1="3" x2="13" y2="21"/><line x1="17" y1="7" x2="17" y2="17"/><line x1="21" y1="10" x2="21" y2="14"/></svg>
               </button>
               <button class="send-btn" id="followSendBtn" disabled>
@@ -423,11 +454,19 @@ How you respond:
 - Keep tone professional, direct, and useful to a working lawyer — skip filler and disclaimers except where a real ambiguity or risk exists.
 - End answers that touch on a live legal decision with a brief, plain note that this is research assistance, not a substitute for independent verification and professional judgment.`;
 
-const SUGGESTIONS = [
-  { icon: `<path d="M12 6.5c-1.4-1-3-1.5-5-1.5-1 0-2 .15-2.5.35v13c.5-.2 1.5-.35 2.5-.35 2 0 3.6.5 5 1.5m0-13c1.4-1 3-1.5 5-1.5 1 0 2 .15 2.5.35v13c-.5-.2-1.5-.35-2.5-.35-2 0-3.6.5-5 1.5m0-13v13"/>`, text: "Ratio decidendi vs obiter dicta" },
-  { icon: `<path d="M9 15l2 2 4-4"/><circle cx="12" cy="12" r="9"/>`, text: "Elements of a valid contract" },
-  { icon: `<path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>`, text: "Requirements for a valid affidavit" },
-  { icon: `<path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/><path d="M9 11l3 3L22 4"/>`, text: "Statement of Claim vs Defence" },
+const CATEGORIES = [
+  { icon: `<path d="M12 6.5c-1.4-1-3-1.5-5-1.5-1 0-2 .15-2.5.35v13c.5-.2 1.5-.35 2.5-.35 2 0 3.6.5 5 1.5m0-13c1.4-1 3-1.5 5-1.5 1 0 2 .15 2.5.35v13c-.5-.2-1.5-.35-2.5-.35-2 0-3.6.5-5 1.5m0-13v13"/>`, label: "Explain", prompt: "Explain ratio decidendi vs obiter dicta with an example" },
+  { icon: `<path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>`, label: "Draft", prompt: "Draft a standard confidentiality clause for an NDA" },
+  { icon: `<path d="M12 3v18M5 8l7-5 7 5M5 8l-2 9a2 2 0 0 0 2 2h4M19 8l2 9a2 2 0 0 1-2 2h-4"/>`, label: "Case law", prompt: "Summarize the rule in Carlill v Carbolic Smoke Ball Co." },
+  { icon: `<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>`, label: "Procedure", prompt: "Statement of Claim vs Statement of Defence — the difference" },
+];
+
+const LEX_PICKS = [
+  "What are the essential elements of a valid contract?",
+  "Explain the postal rule of acceptance",
+  "What is the doctrine of frustration in contract law?",
+  "Requirements for a valid affidavit",
+  "Explain the mirror image rule in contract acceptance",
 ];
 
 let threads = [];
@@ -503,15 +542,23 @@ function formatAnswer(text){
 }
 
 function renderSuggestions(){
-  const list = document.getElementById("suggestionGrid");
-  list.innerHTML = "";
-  SUGGESTIONS.forEach(s => {
-    const row = document.createElement("div");
-    row.className = "quick-row";
-    row.innerHTML = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${s.icon}</svg><span>${s.text}</span>`;
-    row.addEventListener("click", () => startResearch(s.text));
-    list.appendChild(row);
+  const row = document.getElementById("suggestionGrid");
+  row.innerHTML = "";
+  CATEGORIES.forEach(c => {
+    const chip = document.createElement("div");
+    chip.className = "chip";
+    chip.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${c.icon}</svg><span>${c.label}</span>`;
+    chip.addEventListener("click", () => startResearch(c.prompt));
+    row.appendChild(chip);
   });
+
+  const pick = document.getElementById("suggestionPick");
+  pick.innerHTML = "";
+  const pickChip = document.createElement("div");
+  pickChip.className = "chip pick";
+  pickChip.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l1.9 5.8L20 11l-6.1 2.2L12 19l-1.9-5.8L4 11l6.1-2.2z"/></svg><span>Lex's pick</span>`;
+  pickChip.addEventListener("click", () => startResearch(LEX_PICKS[Math.floor(Math.random() * LEX_PICKS.length)]));
+  pick.appendChild(pickChip);
 }
 
 function renderThreadList(){
@@ -526,24 +573,25 @@ function renderThreadList(){
   });
 }
 
-function timeLabel(){
+function timeOfDay(){
   const h = new Date().getHours();
-  if(h >= 5 && h < 12) return "counsel";
-  if(h >= 12 && h < 17) return "counsellor";
-  if(h >= 17 && h < 21) return "counsel";
-  return "night owl";
+  if(h >= 5 && h < 12) return "morning";
+  if(h >= 12 && h < 17) return "afternoon";
+  if(h >= 17 && h < 21) return "evening";
+  return "night";
+}
+
+function addressTerm(){
+  const h = new Date().getHours();
+  if(h >= 22 || h < 5) return "night owl";
+  const terms = ["counsel", "counsellor"];
+  return terms[Math.floor(Math.random() * terms.length)];
 }
 
 function pickGreeting(){
-  const label = timeLabel();
-  const templates = [
-    `What are you <em>researching</em>, ${label}?`,
-    `Where shall we begin, ${label}?`,
-    `What's on the docket today, ${label}?`,
-    `What are we looking into today?`,
-    `Good to see you — what's the <em>question</em>?`,
-  ];
-  return templates[Math.floor(Math.random() * templates.length)];
+  const period = timeOfDay();
+  const label = addressTerm();
+  return `Good ${period}, <em>${label}</em>`;
 }
 
 function showHome(){
@@ -579,6 +627,16 @@ function renderThreadInner(){
     } else {
       row.className = "msg-row assistant";
       let inner = `<div class="assistant-label"><svg width="13" height="13" viewBox="0 0 36 36" fill="currentColor" class="assistant-mark"><g transform="rotate(-38 18 15)"><rect x="9" y="4" width="17" height="8" rx="2.6"/><rect x="14.7" y="12" width="5.6" height="17" rx="2.6"/></g><rect x="5" y="29.5" width="15" height="4.2" rx="2.1"/></svg><span class="assistant-name">LexAI</span></div>`;
+      if(m.thinking){
+        inner += `
+          <div class="think-block" data-index="${i}">
+            <button class="think-toggle">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+              Thought process
+            </button>
+            <div class="think-body">${formatAnswer(m.thinking)}</div>
+          </div>`;
+      }
       inner += `<div class="answer${m.isError ? ' error' : ''}">${formatAnswer(m.content)}</div>`;
       if(!m.isError){
         inner += `
@@ -600,10 +658,15 @@ function renderThreadInner(){
   });
   wireMessageActions();
   wireLongPress();
+  document.querySelectorAll(".think-toggle").forEach(btn => {
+    btn.addEventListener("click", () => {
+      btn.parentElement.classList.toggle("open");
+    });
+  });
   if(loading){
     const row = document.createElement("div");
     row.className = "thinking-row";
-    row.innerHTML = `<div class="gavel-loader"><svg viewBox="0 0 36 36" fill="currentColor"><g transform="rotate(-10 18 15)"><rect x="9" y="4" width="17" height="8" rx="2.6"/><rect x="14.7" y="12" width="5.6" height="17" rx="2.6"/></g><rect x="5" y="29.5" width="15" height="4.2" rx="2.1"/></svg></div><div class="thinking-label">Thinking…</div>`;
+    row.innerHTML = `<div class="gavel-loader"><svg viewBox="0 0 36 36" fill="currentColor"><g transform="rotate(-32 18 15)"><rect x="9" y="4" width="17" height="8" rx="2.6"/><rect x="14.7" y="12" width="5.6" height="17" rx="2.6"/></g><rect x="5" y="29.5" width="15" height="4.2" rx="2.1"/></svg></div><div class="thinking-label">Reasoning…</div>`;
     wrap.appendChild(row);
   }
   document.getElementById("threadView").scrollTop = document.getElementById("threadView").scrollHeight;
@@ -624,7 +687,10 @@ async function callClaude(threadMessages){
   if(data && Array.isArray(data.content)){
     text = data.content.filter(b => b.type === "text").map(b => b.text).join("\n");
   }
-  return text || "I couldn't generate a response just now. Please try rephrasing your question.";
+  return {
+    text: text || "I couldn't generate a response just now. Please try rephrasing your question.",
+    thinking: data?.thinking || "",
+  };
 }
 
 async function startResearch(text){
@@ -642,7 +708,7 @@ async function startResearch(text){
 
   try{
     const reply = await callClaude(t.messages);
-    t.messages.push({ role: "assistant", content: reply });
+    t.messages.push({ role: "assistant", content: reply.text, thinking: reply.thinking });
   } catch(e){
     t.messages.push({ role: "assistant", content: "Something went wrong reaching the AI service. Please try again in a moment.", isError: true });
   } finally {
@@ -706,7 +772,7 @@ function wireMessageActions(){
       renderThreadInner();
       try{
         const reply = await callClaude(t.messages);
-        t.messages.push({ role: "assistant", content: reply });
+        t.messages.push({ role: "assistant", content: reply.text, thinking: reply.thinking });
       } catch(e){
         t.messages.push({ role: "assistant", content: "Something went wrong reaching the AI service. Please try again in a moment.", isError: true });
       } finally {
@@ -814,7 +880,7 @@ async function followUp(text){
 
   try{
     const reply = await callClaude(t.messages);
-    t.messages.push({ role: "assistant", content: reply });
+    t.messages.push({ role: "assistant", content: reply.text, thinking: reply.thinking });
   } catch(e){
     t.messages.push({ role: "assistant", content: "Something went wrong reaching the AI service. Please try again in a moment.", isError: true });
   } finally {
@@ -848,10 +914,26 @@ document.getElementById("newChatBtn").addEventListener("click", () => { showHome
 
 const sidebar = document.getElementById("sidebar");
 const backdrop = document.getElementById("backdrop");
+function isDesktop(){ return window.innerWidth > 820; }
+
 function openSidebarMobile(){ sidebar.classList.add("open"); backdrop.classList.add("show"); }
 function closeSidebarMobile(){ sidebar.classList.remove("open"); backdrop.classList.remove("show"); }
-document.getElementById("openMenuBtn").addEventListener("click", openSidebarMobile);
-document.getElementById("menuBtn").addEventListener("click", closeSidebarMobile);
+function closeSidebarAny(){ if(isDesktop()){ /* leave desktop state as-is on nav */ } else { closeSidebarMobile(); } }
+
+function toggleSidebar(){
+  if(isDesktop()){
+    sidebar.classList.toggle("closed");
+  } else {
+    if(sidebar.classList.contains("open")) closeSidebarMobile(); else openSidebarMobile();
+  }
+}
+
+// Sidebar starts closed on desktop (opened only via the toggle icon);
+// on mobile it's already off-canvas by default via CSS transform.
+if(isDesktop()) sidebar.classList.add("closed");
+
+document.getElementById("openMenuBtn").addEventListener("click", toggleSidebar);
+document.getElementById("menuBtn").addEventListener("click", toggleSidebar);
 backdrop.addEventListener("click", closeSidebarMobile);
 
 document.getElementById("threadView").addEventListener("scroll", (e) => {
@@ -862,6 +944,41 @@ const settingsBackdrop = document.getElementById("settingsBackdrop");
 document.getElementById("avatarBtn").addEventListener("click", () => settingsBackdrop.classList.add("show"));
 document.getElementById("closeSettings").addEventListener("click", () => settingsBackdrop.classList.remove("show"));
 settingsBackdrop.addEventListener("click", (e) => { if(e.target === settingsBackdrop) settingsBackdrop.classList.remove("show"); });
+
+function wireVoiceDictation(buttonId, inputId){
+  const btn = document.getElementById(buttonId);
+  const input = document.getElementById(inputId);
+  const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SpeechRecognitionCtor){
+    btn.style.opacity = "0.35";
+    btn.title = "Voice input not supported in this browser";
+    btn.addEventListener("click", () => {});
+    return;
+  }
+  const recognizer = new SpeechRecognitionCtor();
+  recognizer.continuous = false;
+  recognizer.interimResults = false;
+  recognizer.lang = "en-US";
+  let listening = false;
+
+  recognizer.addEventListener("result", (e) => {
+    const transcript = Array.from(e.results).map(r => r[0].transcript).join(" ");
+    input.value = (input.value ? input.value + " " : "") + transcript;
+    autoGrow(input);
+    updateSendStates();
+  });
+  recognizer.addEventListener("end", () => { listening = false; btn.classList.remove("listening"); });
+  recognizer.addEventListener("error", () => { listening = false; btn.classList.remove("listening"); });
+
+  btn.addEventListener("click", () => {
+    if(listening){ recognizer.stop(); return; }
+    listening = true;
+    btn.classList.add("listening");
+    try{ recognizer.start(); } catch(e){ listening = false; btn.classList.remove("listening"); }
+  });
+}
+wireVoiceDictation("homeVoiceBtn", "homeInput");
+wireVoiceDictation("followVoiceBtn", "followInput");
 
 renderSuggestions();
 showHome();
