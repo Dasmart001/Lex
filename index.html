@@ -108,8 +108,8 @@
   .badge{ margin-left:auto; font-family:'Space Mono',monospace; font-size:10px; color:var(--dim); border:1px solid var(--line); padding:4px 9px; flex-shrink:0; border-radius:5px; }
 
   /* ---- HOME ---- */
-  .home{ flex:1; overflow-y:auto; display:flex; flex-direction:column; align-items:center; padding:5vh 20px 40px 20px; }
-  .home-inner{ width:100%; max-width:640px; margin:auto 0; }
+  .home{ flex:1; overflow-y:auto; display:flex; flex-direction:column; align-items:center; padding:14vh 20px 40px 20px; }
+  .home-inner{ width:100%; max-width:640px; }
 
   .home-greeting{ display:flex; align-items:center; justify-content:center; gap:14px; margin-bottom:28px; flex-wrap:wrap; }
   .home-mark-icon{ flex-shrink:0; }
@@ -124,8 +124,8 @@
   .composer-foot{ display:flex; align-items:center; gap:10px; }
   .model-pill{ font-family:'Space Mono',monospace; font-size:10.5px; color:var(--dim); border:1px solid var(--line); border-radius:20px; padding:4px 10px; }
   .composer-actions{ display:flex; align-items:center; gap:6px; margin-left:auto; }
-  .attach-btn{ width:34px; height:34px; border-radius:50%; background:transparent; border:1px solid var(--line); color:var(--ink); display:flex; align-items:center; justify-content:center; cursor:pointer; transition:background .12s, border-color .12s; flex-shrink:0; }
-  .attach-btn:hover{ background:var(--hover); border-color:var(--ink); }
+  .plus-btn{ width:32px; height:32px; border-radius:50%; background:transparent; border:1px solid var(--line); color:var(--ink); display:flex; align-items:center; justify-content:center; cursor:pointer; transition:background .12s, border-color .12s; flex-shrink:0; }
+  .plus-btn:hover{ background:var(--hover); border-color:var(--ink); }
   .voice-btn{ width:34px; height:34px; border-radius:50%; background:var(--ink); color:var(--inv); border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:opacity .12s; flex-shrink:0; }
   .voice-btn:hover{ opacity:.82; }
   .voice-btn.listening{ animation:voicePulse 1s ease-in-out infinite; }
@@ -141,26 +141,31 @@
   .chip-row{ display:flex; gap:9px; flex-wrap:wrap; justify-content:center; margin-top:22px; }
   .chip-row-center{ display:flex; justify-content:center; margin-top:9px; }
   .chip{
-    display:flex; align-items:center; gap:7px; padding:9px 15px; border:1px solid var(--line); border-radius:20px;
-    font-size:13px; color:var(--dim); cursor:pointer; background:var(--bg); transition:border-color .12s, color .12s, background .12s;
+    display:flex; align-items:center; gap:6px; padding:9px 14px; border:1px solid var(--line); border-radius:20px;
+    font-size:14px; font-weight:500; color:var(--dim); cursor:pointer; background:var(--bg); transition:border-color .12s, color .12s, background .12s;
   }
   .chip:hover{ border-color:var(--ink); color:var(--ink); background:var(--hover); }
   .chip svg{ flex-shrink:0; }
   .chip.pick{ color:var(--dim); }
   .chip.pick svg{ color:var(--faint); }
+  .persist-disclaimer{ text-align:center; font-size:11px; color:var(--faint); margin-top:16px; }
 
   /* ---- THREAD VIEW ---- */
   .thread-view{ flex:1; overflow-y:auto; padding:8px 24px 8px 24px; }
   .thread-inner{ max-width:700px; margin:0 auto; }
 
   .msg-row{ padding:14px 0; }
-  .msg-row.user{ display:flex; justify-content:flex-end; padding-bottom:6px; }
+  .msg-row.user{ display:flex; flex-direction:column; align-items:flex-end; padding-bottom:2px; }
   .msg-row.assistant{ padding-top:6px; padding-bottom:22px; }
 
   .user-bubble{
     max-width:78%; background:var(--ink); color:var(--inv); font-size:15px; line-height:1.55;
     padding:11px 16px; border-radius:16px 16px 4px 16px; white-space:pre-wrap; word-break:break-word;
   }
+  .user-actions{ display:flex; justify-content:flex-end; gap:1px; margin-top:5px; }
+  .user-actions button{ background:transparent; border:none; color:var(--faint); cursor:pointer; padding:6px; border-radius:7px; display:flex; transition:background .12s, color .12s; }
+  .user-actions button:hover{ background:var(--hover); color:var(--ink); }
+  .user-actions button.active{ color:var(--ink); }
 
   .assistant-label{ display:flex; align-items:center; gap:7px; margin-bottom:10px; }
   .assistant-mark{ flex-shrink:0; }
@@ -392,11 +397,11 @@
             <textarea id="homeInput" rows="1" placeholder="How can Lex help you today?"></textarea>
           </div>
           <div class="composer-foot">
+            <button class="plus-btn" title="Attach image">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
             <span class="model-pill">Lex 1.0</span>
             <div class="composer-actions">
-              <button class="attach-btn" title="Attach image">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2.5"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5-9 9"/></svg>
-              </button>
               <button class="voice-btn" id="homeVoiceBtn" title="Voice input">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="10" x2="5" y2="14"/><line x1="9" y1="6" x2="9" y2="18"/><line x1="13" y1="3" x2="13" y2="21"/><line x1="17" y1="7" x2="17" y2="17"/><line x1="21" y1="10" x2="21" y2="14"/></svg>
               </button>
@@ -409,6 +414,7 @@
 
         <div class="chip-row" id="suggestionGrid"></div>
         <div class="chip-row-center" id="suggestionPick"></div>
+        <div class="persist-disclaimer">Lex is AI and can make mistakes. Verify citations before relying on them.</div>
       </div>
     </div>
 
@@ -424,11 +430,11 @@
             <textarea id="followInput" rows="1" placeholder="Ask a follow-up…"></textarea>
           </div>
           <div class="composer-foot">
+            <button class="plus-btn" title="Attach image">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
             <span class="model-pill">Lex 1.0</span>
             <div class="composer-actions">
-              <button class="attach-btn" title="Attach image">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2.5"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5-9 9"/></svg>
-              </button>
               <button class="voice-btn" id="followVoiceBtn" title="Voice input">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="10" x2="5" y2="14"/><line x1="9" y1="6" x2="9" y2="18"/><line x1="13" y1="3" x2="13" y2="21"/><line x1="17" y1="7" x2="17" y2="17"/><line x1="21" y1="10" x2="21" y2="14"/></svg>
               </button>
@@ -438,6 +444,7 @@
             </div>
           </div>
         </div>
+        <div class="persist-disclaimer">Lex is AI and can make mistakes. Verify citations before relying on them.</div>
       </div>
     </div>
   </div>
@@ -457,8 +464,8 @@ How you respond:
 const CATEGORIES = [
   { icon: `<path d="M12 6.5c-1.4-1-3-1.5-5-1.5-1 0-2 .15-2.5.35v13c.5-.2 1.5-.35 2.5-.35 2 0 3.6.5 5 1.5m0-13c1.4-1 3-1.5 5-1.5 1 0 2 .15 2.5.35v13c-.5-.2-1.5-.35-2.5-.35-2 0-3.6.5-5 1.5m0-13v13"/>`, label: "Explain", prompt: "Explain ratio decidendi vs obiter dicta with an example" },
   { icon: `<path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>`, label: "Draft", prompt: "Draft a standard confidentiality clause for an NDA" },
-  { icon: `<path d="M12 3v18M5 8l7-5 7 5M5 8l-2 9a2 2 0 0 0 2 2h4M19 8l2 9a2 2 0 0 1-2 2h-4"/>`, label: "Case law", prompt: "Summarize the rule in Carlill v Carbolic Smoke Ball Co." },
-  { icon: `<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>`, label: "Procedure", prompt: "Statement of Claim vs Statement of Defence — the difference" },
+  { icon: `<path d="M12 3v18M5 8l7-5 7 5M5 8l-2 9a2 2 0 0 0 2 2h4M19 8l2 9a2 2 0 0 1-2 2h-4"/>`, label: "Cases", prompt: "Summarize the rule in Carlill v Carbolic Smoke Ball Co." },
+  { icon: `<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>`, label: "Rules", prompt: "Statement of Claim vs Statement of Defence — the difference" },
 ];
 
 const LEX_PICKS = [
@@ -623,7 +630,13 @@ function renderThreadInner(){
     const row = document.createElement("div");
     if(m.role === "user"){
       row.className = "msg-row user";
-      row.innerHTML = `<div class="user-bubble" data-index="${i}">${escapeHtml(m.content)}</div>`;
+      row.innerHTML = `
+        <div class="user-bubble" data-index="${i}">${escapeHtml(m.content)}</div>
+        <div class="user-actions" data-index="${i}">
+          <button class="uact-retry" title="Retry"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12a9 9 0 1 1-3-6.7"/><polyline points="21 3 21 9 15 9"/></svg></button>
+          <button class="uact-edit" title="Edit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></button>
+          <button class="uact-copy" title="Copy"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+        </div>`;
     } else {
       row.className = "msg-row assistant";
       let inner = `<div class="assistant-label"><svg width="13" height="13" viewBox="0 0 36 36" fill="currentColor" class="assistant-mark"><g transform="rotate(-38 18 15)"><rect x="9" y="4" width="17" height="8" rx="2.6"/><rect x="14.7" y="12" width="5.6" height="17" rx="2.6"/></g><rect x="5" y="29.5" width="15" height="4.2" rx="2.1"/></svg><span class="assistant-name">LexAI</span></div>`;
@@ -642,21 +655,18 @@ function renderThreadInner(){
         inner += `
           <div class="msg-actions" data-index="${i}">
             <button class="act-copy" title="Copy"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
-            <button class="act-share" title="Share"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="10.6" x2="15.4" y2="6.4"/><line x1="8.6" y1="13.4" x2="15.4" y2="17.6"/></svg></button>
             <button class="act-read" title="Read aloud"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polygon points="4 8 8 8 12 4 12 20 8 16 4 16 4 8"/><path d="M16 9a4 4 0 0 1 0 6"/></svg></button>
-            <span class="sep"></span>
             <button class="act-up" title="Good response"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 11v10H4a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1zM7 11l4-8a2 2 0 0 1 4 1.5V9h5.5a2 2 0 0 1 2 2.3l-1.2 8A2 2 0 0 1 19.3 21H10a3 3 0 0 1-3-3"/></svg></button>
             <button class="act-down" title="Poor response"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 13V3h3a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1zM17 13l-4 8a2 2 0 0 1-4-1.5V15H3.5a2 2 0 0 1-2-2.3l1.2-8A2 2 0 0 1 4.7 3H14a3 3 0 0 1 3 3"/></svg></button>
-            <span class="sep"></span>
             <button class="act-regen" title="Regenerate"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12a9 9 0 1 1-3-6.7"/><polyline points="21 3 21 9 15 9"/></svg></button>
-          </div>
-          <div class="answer-meta"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>UNVERIFIED — CONFIRM BEFORE CITING</div>`;
+          </div>`;
       }
       row.innerHTML = inner;
     }
     wrap.appendChild(row);
   });
   wireMessageActions();
+  wireUserActions();
   wireLongPress();
   document.querySelectorAll(".think-toggle").forEach(btn => {
     btn.addEventListener("click", () => {
@@ -730,14 +740,6 @@ function wireMessageActions(){
       setTimeout(() => copyBtn.classList.remove("active"), 900);
     });
 
-    bar.querySelector(".act-share").addEventListener("click", async () => {
-      if(navigator.share){
-        try{ await navigator.share({ text: msg.content }); } catch(e){ /* cancelled */ }
-      } else {
-        navigator.clipboard?.writeText(msg.content).catch(() => {});
-      }
-    });
-
     const readBtn = bar.querySelector(".act-read");
     readBtn.addEventListener("click", () => {
       if(!("speechSynthesis" in window)) return;
@@ -785,6 +787,51 @@ function wireMessageActions(){
 
 let longPressTimer = null;
 let ctxTargetIndex = null;
+
+function wireUserActions(){
+  const t = activeThread();
+  document.querySelectorAll(".user-actions").forEach(bar => {
+    const idx = parseInt(bar.dataset.index, 10);
+    const msg = t.messages[idx];
+
+    const copyBtn = bar.querySelector(".uact-copy");
+    copyBtn.addEventListener("click", () => {
+      navigator.clipboard?.writeText(msg.content).catch(() => {});
+      copyBtn.classList.add("active");
+      setTimeout(() => copyBtn.classList.remove("active"), 900);
+    });
+
+    bar.querySelector(".uact-edit").addEventListener("click", () => {
+      const content = msg.content;
+      t.messages = t.messages.slice(0, idx);
+      renderThreadInner();
+      const input = document.getElementById("followInput");
+      input.value = content;
+      autoGrow(input);
+      updateSendStates();
+      input.focus();
+    });
+
+    bar.querySelector(".uact-retry").addEventListener("click", async () => {
+      if(loading) return;
+      // Re-send this exact question, dropping it and everything after,
+      // then asking again as a fresh turn.
+      t.messages = t.messages.slice(0, idx);
+      t.messages.push({ role: "user", content: msg.content });
+      loading = true;
+      renderThreadInner();
+      try{
+        const reply = await callClaude(t.messages);
+        t.messages.push({ role: "assistant", content: reply.text, thinking: reply.thinking });
+      } catch(e){
+        t.messages.push({ role: "assistant", content: "Something went wrong reaching the AI service. Please try again in a moment.", isError: true });
+      } finally {
+        loading = false;
+        renderThreadInner();
+      }
+    });
+  });
+}
 
 function wireLongPress(){
   document.querySelectorAll(".user-bubble").forEach(bubble => {
