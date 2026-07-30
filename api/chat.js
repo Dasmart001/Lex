@@ -39,9 +39,6 @@ export default async function handler(req, res) {
   try {
     const { system, messages } = req.body || {};
 
-    // Convert our Anthropic-shaped { role, content } messages into
-    // Gemini's { role, parts: [{ text }] } format. Gemini uses "model"
-    // instead of "assistant" for the AI's turns.
     const contents = (Array.isArray(messages) ? messages : []).map((m) => ({
       role: m.role === "assistant" ? "model" : "user",
       parts: [{ text: m.content }],
@@ -50,17 +47,9 @@ export default async function handler(req, res) {
     const baseConfig = {
       contents,
       ...(system ? { systemInstruction: { parts: [{ text: system }] } } : {}),
-      // Real web grounding lets Gemini search Google and cite live sources.
-      // IMPORTANT: on the free tier, combining this with generateContent
-      // appears to route requests through a much stricter daily quota
-      // (as low as 20/day instead of ~1500/day for plain requests). Keep
-      // this OFF by default until billing is enabled — set
-      // ENABLE_WEB_SEARCH=true as a Vercel env var to turn it back on.
       ...(process.env.ENABLE_WEB_SEARCH === "true" ? { tools: [{ google_search: {} }] } : {}),
     };
 
-    // First attempt: with thinking enabled, generous token budget so
-    // reasoning doesn't crowd out the actual answer.
     let { ok, status, data } = await callGemini({
       ...baseConfig,
       generationConfig: {
@@ -81,10 +70,6 @@ export default async function handler(req, res) {
     let thinking = parts.filter((p) => p.thought).map((p) => p.text || "").join("\n").trim();
     let text = parts.filter((p) => !p.thought).map((p) => p.text || "").join("\n").trim();
 
-    // If there's no answer text, capture *why* instead of silently retrying
-    // (a second call would double the request count against an already
-    // tight daily quota). The person can hit Retry manually if they want
-    // another attempt — that's a deliberate choice, not an automatic one.
     let diagnostic = "";
     if (!text) {
       const finishReason = data?.candidates?.[0]?.finishReason;
@@ -96,8 +81,6 @@ export default async function handler(req, res) {
         : "Gemini returned an empty response for an unknown reason.";
     }
 
-    // Pull real citations out of the grounding metadata, when Gemini
-    // actually used web search for this answer. Deduplicated by URL.
     const chunks = data?.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
     const seen = new Set();
     const sources = [];
@@ -110,113 +93,6 @@ export default async function handler(req, res) {
       }
     }
 
-    // Shape the response the same way the frontend already expects,
-    // so index.html needed zero changes beyond the URL it calls.
-    return res.status(200).json({
-      content: [{ type: "text", text }],
-      thinking,
-      sources,
-      error: diagnostic || undefined,
-    });
-  } catch (err) {
-    return res.status(500).json({
-      content: [{ type: "text", text: "" }],
-      error: String(err),
-    });
-  }
-}
-  }
-
-  try {
-    const { system, messages } = req.body || {};
-
-    // Convert our Anthropic-shaped { role, content } messages into
-    // Gemini's { role, parts: [{ text }] } format. Gemini uses "model"
-    // instead of "assistant" for the AI's turns.
-    const contents = (Array.isArray(messages) ? messages : []).map((m) => ({
-      role: m.role === "assistant" ? "model" : "user",
-      parts: [{ text: m.content }],
-    }));
-
-    const baseConfig = {
-      contents,
-      ...(system ? { systemInstruction: { parts: [{ text: system }] } } : {}),
-      // Real web grounding: lets Gemini search Google and cite live sources
-      // instead of answering purely from training data. This is what makes
-      // LexAI's research genuinely checkable rather than just plausible.
-      tools: [{ google_search: {} }],
-    };
-
-    // First attempt: with thinking enabled, generous token budget so
-    // reasoning doesn't crowd out the actual answer.
-    let { ok, status, data } = await callGemini({
-      ...baseConfig,
-      generationConfig: {
-        maxOutputTokens: 8192,
-        thinkingConfig: { includeThoughts: true, thinkingLevel: "low" },
-      },
-    });
-
-    if (!ok) {
-      const message = data?.error?.message || "Gemini API request failed.";
-      return res.status(status).json({
-        content: [{ type: "text", text: "" }],
-        error: message,
-      });
-    }
-
-    let parts = data?.candidates?.[0]?.content?.parts || [];
-    let thinking = parts.filter((p) => p.thought).map((p) => p.text || "").join("\n").trim();
-    let text = parts.filter((p) => !p.thought).map((p) => p.text || "").join("\n").trim();
-    let groundingSource = data;
-
-    // Safety net: if thinking consumed the whole token budget and left no
-    // actual answer, retry once with thinking off so the user still gets
-    // a real response instead of an empty one.
-    let diagnostic = "";
-    if (!text) {
-      const retry = await callGemini({
-        ...baseConfig,
-        generationConfig: { maxOutputTokens: 8192 },
-      });
-      if (retry.ok) {
-        const retryParts = retry.data?.candidates?.[0]?.content?.parts || [];
-        text = retryParts.map((p) => p.text || "").join("\n").trim();
-        thinking = "";
-        groundingSource = retry.data;
-        if (!text) {
-          // Still nothing — capture *why* so we can actually see the real
-          // reason instead of guessing (blocked prompt, safety filter,
-          // hit max tokens with no output, etc).
-          const finishReason = retry.data?.candidates?.[0]?.finishReason;
-          const blockReason = retry.data?.promptFeedback?.blockReason;
-          diagnostic = blockReason
-            ? `Blocked by Gemini: ${blockReason}`
-            : finishReason
-            ? `Gemini stopped with no output (reason: ${finishReason})`
-            : "Gemini returned an empty response for an unknown reason.";
-        }
-      } else {
-        diagnostic = retry.data?.error?.message || "Retry request to Gemini failed.";
-      }
-    }
-
-    // Pull real citations out of the grounding metadata, when Gemini
-    // actually used web search for this answer. Deduplicated by URL.
-    const chunks = groundingSource?.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
-    const seen = new Set();
-    const sources = [];
-    for (const c of chunks) {
-      const uri = c?.web?.uri;
-      const title = c?.web?.title || uri;
-      if (uri && !seen.has(uri)) {
-        seen.add(uri);
-        sources.push({ title, uri });
-      }
-    }
-
-    // Shape the response the same way the frontend already expects,
-    // so index.html needed zero changes beyond the URL it calls.
     return res.status(200).json({
       content: [{ type: "text", text }],
       thinking,
