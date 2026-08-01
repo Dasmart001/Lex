@@ -57,9 +57,13 @@
 
   .threads{ flex:1; overflow-y:auto; padding:0 10px; }
   .thread-item{
-    padding:8px 9px; border-radius:7px; cursor:pointer; font-size:13px; color:var(--dim);
-    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:1px;
+    padding:2px 4px 2px 9px; border-radius:7px; cursor:pointer; font-size:13px; color:var(--dim);
+    margin-bottom:1px; display:flex; align-items:center; gap:4px;
   }
+  .thread-item-title{ flex:1; min-width:0; padding:6px 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .thread-delete{ flex-shrink:0; background:transparent; border:none; color:var(--faint); padding:6px; border-radius:6px; display:flex; cursor:pointer; opacity:0; transition:opacity .12s, background .12s, color .12s; }
+  .thread-item:hover .thread-delete{ opacity:1; }
+  .thread-delete:hover{ background:var(--line); color:var(--ink); }
   .thread-item.active{ background:var(--hover); color:var(--ink); font-weight:600; }
   .thread-item:hover:not(.active){ background:var(--hover); }
 
@@ -149,6 +153,70 @@
   .chip.pick{ color:var(--dim); }
   .chip.pick svg{ color:var(--faint); }
   .persist-disclaimer{ text-align:center; font-size:11px; color:var(--faint); margin-top:16px; }
+
+  /* ---- drafting mode ---- */
+  .draft-toolbar{ display:flex; align-items:center; justify-content:space-between; padding:12px 20px; border-bottom:1px solid var(--line-soft); flex-shrink:0; }
+  .draft-version-nav{ display:flex; align-items:center; gap:6px; font-family:'Space Mono',monospace; font-size:11.5px; color:var(--dim); }
+  .draft-toolbar-actions{ display:flex; align-items:center; gap:2px; }
+  .draft-page-wrap{ flex:1; overflow-y:auto; padding:28px 20px 20px 20px; display:flex; justify-content:center; }
+  .draft-page{
+    max-width:680px; width:100%; background:var(--bg); border:1px solid var(--line); border-radius:6px;
+    padding:40px 36px; font-size:14.5px; line-height:1.8; box-shadow:0 1px 4px rgba(0,0,0,0.04);
+  }
+  .draft-page h3{ font-family:'Libre Caslon Text',serif; font-size:17px; margin:20px 0 10px 0; font-weight:700; }
+  .draft-page h3:first-child{ margin-top:0; }
+  .draft-page h4{ font-size:14.5px; margin:16px 0 8px 0; font-weight:700; }
+  .draft-page p{ margin:0 0 14px 0; }
+  .draft-page ul, .draft-page ol{ margin:0 0 14px 0; padding-left:20px; }
+  .draft-page li{ margin-bottom:6px; }
+  .draft-page strong{ font-weight:700; }
+  .draft-page-edit{
+    max-width:680px; width:100%; min-height:60vh; background:var(--bg); border:1px solid var(--ink); border-radius:6px;
+    padding:40px 36px; font-size:14.5px; line-height:1.8; font-family:'Public Sans',sans-serif; color:var(--ink); resize:vertical;
+  }
+  .draft-page-edit:focus{ outline:none; }
+  .draft-notes{ padding:14px 20px; font-size:12.5px; color:var(--dim); background:var(--panel, var(--hover)); border-top:1px solid var(--line-soft); flex-shrink:0; }
+
+  /* ---- student mode ---- */
+  .study-view{ flex:1; display:flex; flex-direction:column; align-items:center; padding:20px 20px 30px 20px; overflow-y:auto; }
+  .study-progress{
+    width:100%; max-width:520px; display:flex; justify-content:space-between; font-family:'Space Mono',monospace;
+    font-size:11px; color:var(--faint); margin-bottom:24px;
+  }
+  .study-stage{ width:100%; max-width:520px; display:flex; flex-direction:column; align-items:center; flex:1; justify-content:center; }
+
+  .flashcard{
+    width:100%; min-height:220px; border:1.5px solid var(--ink); border-radius:14px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; padding:32px; text-align:center;
+  }
+  .flashcard-face{ font-size:17px; line-height:1.6; }
+  .flashcard-front{ font-family:'Libre Caslon Text',serif; }
+  .flashcard-back{ color:var(--dim); }
+  .flashcard-hint{ font-size:11.5px; color:var(--faint); margin-top:14px; }
+
+  .study-controls{ width:100%; max-width:520px; display:flex; gap:10px; margin-top:24px; }
+  .study-btn{
+    flex:1; padding:13px; border-radius:12px; font-size:13.5px; font-weight:600; cursor:pointer; border:1.5px solid var(--line);
+    background:var(--bg); color:var(--ink); transition:background .12s, border-color .12s;
+  }
+  .study-btn-again:hover{ border-color:var(--error, #b3483a); }
+  .study-btn-known{ background:var(--ink); color:var(--inv); border-color:var(--ink); }
+  .study-btn-known:hover{ opacity:.88; }
+
+  .quiz-question{ font-family:'Libre Caslon Text',serif; font-size:18px; line-height:1.5; margin-bottom:20px; text-align:center; }
+  .quiz-options{ width:100%; display:flex; flex-direction:column; gap:9px; }
+  .quiz-option{
+    padding:13px 16px; border:1.5px solid var(--line); border-radius:11px; font-size:14px; text-align:left;
+    cursor:pointer; background:var(--bg); transition:border-color .12s, background .12s;
+  }
+  .quiz-option:hover:not(.locked){ border-color:var(--ink); background:var(--hover); }
+  .quiz-option.correct{ border-color:#2e7d5b; background:rgba(46,125,91,0.08); color:#2e7d5b; font-weight:600; }
+  .quiz-option.incorrect{ border-color:var(--error, #b3483a); background:rgba(179,72,58,0.08); color:var(--error, #b3483a); font-weight:600; }
+  .quiz-explanation{ margin-top:18px; padding:14px 16px; background:var(--hover); border-radius:10px; font-size:13px; color:var(--dim); line-height:1.6; }
+
+  .study-result{ flex:1; display:flex; align-items:center; justify-content:center; padding:20px; }
+  .study-result-detail{ font-size:14px; color:var(--dim); margin-top:10px; line-height:1.6; }
+
   .sources-row{ display:flex; flex-wrap:wrap; gap:6px; margin-top:12px; }
   .source-chip{
     font-size:11px; color:var(--dim); border:1px solid var(--line); border-radius:12px; padding:4px 10px;
@@ -159,6 +227,7 @@
 
   /* ---- THREAD VIEW ---- */
   .thread-view{ flex:1; overflow-y:auto; padding:8px 24px 8px 24px; }
+  .draft-view{ flex:1; display:flex; flex-direction:column; overflow:hidden; min-height:0; }
   .thread-inner{ max-width:700px; margin:0 auto; }
 
   .msg-row{ padding:14px 0; }
@@ -320,7 +389,7 @@
     </div>
 
     <div class="sb-primary">
-      <button class="sb-row active" data-mode="research">
+      <button class="sb-row active" id="navResearch" data-mode="research">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5.5C4 4.7 4.7 4 5.5 4H11v16H5.5c-.8 0-1.5-.7-1.5-1.5z"/><path d="M20 5.5c0-.8-.7-1.5-1.5-1.5H13v16h5.5c.8 0 1.5-.7 1.5-1.5z"/></svg>
         Research
       </button>
@@ -334,10 +403,13 @@
         Projects
         <span class="soon">soon</span>
       </button>
-      <button class="sb-row disabled" disabled>
+      <button class="sb-row" id="navDrafting" data-mode="drafting">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/><line x1="16" y1="8" x2="2" y2="22"/><line x1="17.5" y1="15" x2="9" y2="15"/></svg>
         Drafting
-        <span class="soon">soon</span>
+      </button>
+      <button class="sb-row" id="navStudent" data-mode="student">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 10L12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1.1 2.7 2 6 2s6-.9 6-2v-5"/></svg>
+        Student
       </button>
     </div>
 
@@ -346,11 +418,13 @@
       <span class="sb-filter"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="10" y1="18" x2="14" y2="18"/></svg></span>
     </div>
     <div class="threads" id="threadList"></div>
+    <div class="threads" id="draftList" style="display:none;"></div>
+    <div class="threads" id="studentList" style="display:none;"></div>
 
     <div class="sb-foot">
       <button class="pill-newchat" id="newChatBtn">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.375 2.625a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4Z"/></svg>
-        New chat
+        <span id="newChatLabel">New chat</span>
       </button>
       <button class="avatar" id="avatarBtn" title="Settings">L</button>
     </div>
@@ -513,6 +587,173 @@
         <div class="persist-disclaimer">Lex is AI and can make mistakes. Verify citations before relying on them.</div>
       </div>
     </div>
+
+    <!-- DRAFTING HOME -->
+    <div class="home" id="draftHome" style="display:none;">
+      <div class="home-inner">
+        <div class="home-greeting">
+          <svg width="26" height="26" viewBox="0 0 36 36" fill="currentColor" class="home-mark-icon">
+            <g transform="rotate(-38 18 15)">
+              <rect x="9" y="4" width="17" height="8" rx="2.6"/>
+              <rect x="14.7" y="12" width="5.6" height="17" rx="2.6"/>
+            </g>
+            <rect x="5" y="29.5" width="15" height="4.2" rx="2.1"/>
+          </svg>
+          <span class="home-title serif" id="draftGreeting">What are we drafting today?</span>
+        </div>
+
+        <div class="composer" id="draftComposer">
+          <div class="composer-row">
+            <textarea id="draftInput" rows="1" placeholder="Describe the document you need — parties, key terms, anything specific…"></textarea>
+          </div>
+          <div class="composer-foot">
+            <button class="plus-btn" title="Attach reference">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+            <span class="model-pill">Lex 1.0</span>
+            <div class="composer-actions">
+              <button class="send-btn" id="draftSendBtn" disabled>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="chip-row" id="draftSuggestionGrid"></div>
+        <div class="persist-disclaimer">Every draft has bracketed placeholders to fill in and needs review before use — Lex is a starting point, not a substitute for legal judgment.</div>
+      </div>
+    </div>
+
+    <!-- DRAFT DOCUMENT VIEW -->
+    <div class="draft-view" id="draftView" style="display:none;">
+      <div class="draft-toolbar">
+        <div class="draft-version-nav">
+          <button class="icon-btn" id="draftVerPrev" title="Previous version">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <span id="draftVerLabel">v1</span>
+          <button class="icon-btn" id="draftVerNext" title="Next version">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+        <div class="draft-toolbar-actions">
+          <button class="icon-btn" id="draftEditBtn" title="Edit">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          </button>
+          <button class="icon-btn" id="draftCopyBtn" title="Copy">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
+          <button class="icon-btn" id="draftDownloadBtn" title="Download">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="draft-page-wrap" id="draftPageWrap">
+        <div class="draft-page" id="draftPage"></div>
+        <textarea class="draft-page-edit" id="draftPageEdit" style="display:none;"></textarea>
+      </div>
+      <div class="draft-notes" id="draftNotes" style="display:none;"></div>
+    </div>
+
+    <div class="followup" id="draftFollowup" style="display:none;">
+      <div class="followup-inner">
+        <div class="composer" id="draftReviseComposer">
+          <div class="composer-row">
+            <textarea id="draftReviseInput" rows="1" placeholder="Ask Lex to revise this draft…"></textarea>
+          </div>
+          <div class="composer-foot">
+            <span class="model-pill">Lex 1.0</span>
+            <div class="composer-actions">
+              <button class="send-btn" id="draftReviseSendBtn" disabled>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="persist-disclaimer">Review every clause before use. Lex can make mistakes.</div>
+      </div>
+    </div>
+
+    <!-- STUDENT HOME -->
+    <div class="home" id="studentHome" style="display:none;">
+      <div class="home-inner">
+        <div class="home-greeting">
+          <svg width="26" height="26" viewBox="0 0 36 36" fill="currentColor" class="home-mark-icon">
+            <g transform="rotate(-38 18 15)">
+              <rect x="9" y="4" width="17" height="8" rx="2.6"/>
+              <rect x="14.7" y="12" width="5.6" height="17" rx="2.6"/>
+            </g>
+            <rect x="5" y="29.5" width="15" height="4.2" rx="2.1"/>
+          </svg>
+          <span class="home-title serif">What are you studying?</span>
+        </div>
+
+        <div class="modepills" style="margin-bottom:22px;">
+          <div class="pill on" id="studyModeFlashcards">Flashcards</div>
+          <div class="pill" id="studyModeQuiz">Quiz</div>
+        </div>
+
+        <div class="composer" id="studentComposer">
+          <div class="composer-row">
+            <textarea id="studentInput" rows="1" placeholder="e.g. offer and acceptance in contract law"></textarea>
+          </div>
+          <div class="composer-foot">
+            <span class="model-pill">Lex 1.0</span>
+            <div class="composer-actions">
+              <button class="send-btn" id="studentSendBtn" disabled>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="chip-row" id="studentSuggestionGrid"></div>
+        <div class="persist-disclaimer">Practice material generated by Lex — not verified past exam questions. Useful for revision, not a substitute for your course materials.</div>
+      </div>
+    </div>
+
+    <!-- FLASHCARD VIEW -->
+    <div class="study-view" id="flashcardView" style="display:none;">
+      <div class="study-progress">
+        <span id="fcProgressLabel">Card 1 of 10</span>
+        <span id="fcKnownLabel">0 known</span>
+      </div>
+      <div class="study-stage">
+        <div class="flashcard" id="flashcard">
+          <div class="flashcard-face flashcard-front" id="fcFront"></div>
+          <div class="flashcard-face flashcard-back" id="fcBack" style="display:none;"></div>
+        </div>
+        <div class="flashcard-hint" id="fcHint">Tap the card to flip</div>
+      </div>
+      <div class="study-controls" id="fcControls" style="display:none;">
+        <button class="study-btn study-btn-again" id="fcAgainBtn">Still learning</button>
+        <button class="study-btn study-btn-known" id="fcKnownBtn">I knew this</button>
+      </div>
+    </div>
+
+    <!-- QUIZ VIEW -->
+    <div class="study-view" id="quizView" style="display:none;">
+      <div class="study-progress">
+        <span id="qzProgressLabel">Question 1 of 8</span>
+        <span id="qzScoreLabel">Score: 0</span>
+      </div>
+      <div class="study-stage">
+        <div class="quiz-question" id="qzQuestion"></div>
+        <div class="quiz-options" id="qzOptions"></div>
+        <div class="quiz-explanation" id="qzExplanation" style="display:none;"></div>
+      </div>
+      <div class="study-controls">
+        <button class="study-btn study-btn-known" id="qzNextBtn" style="display:none;">Next question</button>
+      </div>
+    </div>
+
+    <div class="study-result" id="studyResult" style="display:none;">
+      <div class="home-inner" style="max-width:480px; text-align:center;">
+        <div class="home-title serif" id="resultTitle">Done!</div>
+        <div class="study-result-detail" id="resultDetail"></div>
+        <button class="pill-newchat" id="studyRestartBtn" style="margin:24px auto 0 auto;">Study something else</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -545,6 +786,52 @@ const LEX_PICKS = [
 let threads = [];
 let activeId = null;
 let loading = false;
+let drafts = [];
+let activeDraftId = null;
+let draftEditing = false;
+let studyDecks = [];
+let activeStudyId = null;
+let studyMode = "flashcards";
+let currentMode = "research";
+
+const STORAGE_KEY = "lexai_threads_v1";
+
+function saveThreads(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ threads, activeId, drafts, activeDraftId, studyDecks, activeStudyId }));
+  } catch(e){
+    // Storage full or unavailable (private browsing, etc) — fail silently,
+    // the app still works, it just won't remember across reloads.
+  }
+}
+
+function loadThreads(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return;
+    const parsed = JSON.parse(raw);
+    if(Array.isArray(parsed?.threads)){
+      threads = parsed.threads;
+      activeId = parsed.activeId || null;
+    }
+    if(Array.isArray(parsed?.drafts)){
+      drafts = parsed.drafts;
+      activeDraftId = parsed.activeDraftId || null;
+    }
+    if(Array.isArray(parsed?.studyDecks)){
+      studyDecks = parsed.studyDecks;
+      activeStudyId = parsed.activeStudyId || null;
+    }
+  } catch(e){
+    // Corrupted data — start fresh rather than crash.
+    threads = [];
+    activeId = null;
+    drafts = [];
+    activeDraftId = null;
+    studyDecks = [];
+    activeStudyId = null;
+  }
+}
 
 function uid(){ return Math.random().toString(36).slice(2,10); }
 
@@ -552,7 +839,14 @@ function newThread(){
   const t = { id: uid(), title: "New chat", messages: [] };
   threads.unshift(t);
   activeId = t.id;
+  saveThreads();
   return t;
+}
+
+function deleteThread(id){
+  threads = threads.filter(t => t.id !== id);
+  if(activeId === id) activeId = null;
+  saveThreads();
 }
 
 function activeThread(){ return threads.find(t => t.id === activeId); }
@@ -640,8 +934,14 @@ function renderThreadList(){
   threads.forEach(t => {
     const el = document.createElement("div");
     el.className = "thread-item" + (t.id === activeId ? " active" : "");
-    el.textContent = t.title;
-    el.addEventListener("click", () => { activeId = t.id; showThread(); closeSidebarMobile(); });
+    el.innerHTML = `<span class="thread-item-title">${escapeHtml(t.title)}</span><button class="thread-delete" title="Delete"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg></button>`;
+    el.querySelector(".thread-item-title").addEventListener("click", () => { activeId = t.id; showThread(); closeSidebarMobile(); });
+    el.querySelector(".thread-delete").addEventListener("click", (e) => {
+      e.stopPropagation();
+      deleteThread(t.id);
+      if(activeThread()) showThread(); else showHome();
+      renderThreadList();
+    });
     list.appendChild(el);
   });
 }
@@ -749,15 +1049,16 @@ function renderThreadInner(){
     wrap.appendChild(row);
   }
   document.getElementById("threadView").scrollTop = document.getElementById("threadView").scrollHeight;
+  saveThreads();
 }
 
-async function callClaude(threadMessages){
+async function callClaude(threadMessages, systemPrompt){
   const payload = threadMessages.map(m => ({ role: m.role, content: m.content }));
   const response = await fetch("/api/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      system: SYSTEM_PROMPT,
+      system: systemPrompt || SYSTEM_PROMPT,
       messages: payload,
     }),
   });
@@ -1027,7 +1328,12 @@ followInput.addEventListener("keydown", e => { if(e.key === "Enter" && !e.shiftK
 
 document.getElementById("homeSendBtn").addEventListener("click", () => startResearch(homeInput.value));
 document.getElementById("followSendBtn").addEventListener("click", () => followUp(followInput.value));
-document.getElementById("newChatBtn").addEventListener("click", () => { showHome(); closeSidebarMobile(); });
+document.getElementById("newChatBtn").addEventListener("click", () => {
+  if(currentMode === "research"){ showHome(); }
+  else if(currentMode === "drafting"){ showDraftHome(); }
+  else { showStudentHome(); }
+  closeSidebarMobile();
+});
 
 const sidebar = document.getElementById("sidebar");
 const backdrop = document.getElementById("backdrop");
@@ -1225,8 +1531,606 @@ voiceMicBtn.addEventListener("click", () => {
   }
 });
 
+/* ==================== DRAFTING MODE ==================== */
+
+const DRAFTING_SYSTEM_PROMPT = `You are LexAI's document drafting engine, generating professional legal documents for Nigerian legal practice (with general applicability elsewhere).
+
+Rules:
+- Output ONLY the document itself first — no greeting, no "Here's your draft", no closing remarks mixed into the body.
+- Use clear section headings (### for major sections), numbered clauses where appropriate for contracts/agreements, and proper legal document structure (title, parties, recitals/background where relevant, operative clauses, execution block).
+- For any information not provided by the user (names, dates, addresses, amounts, jurisdiction specifics), use clear bracketed placeholders like [PARTY A FULL NAME], [DATE], [ADDRESS], [AMOUNT] — never invent specific facts.
+- Match the formality and structure expected of the document type requested.
+- Never fabricate case citations or statutory references within a document; if uncertain, use a placeholder like [RELEVANT STATUTE REFERENCE] instead.
+- After the complete document, add a line containing exactly ---NOTES--- followed by a short list of the placeholders used and any important assumptions or considerations. Keep notes concise.
+- If revising an existing draft based on a follow-up instruction, apply the requested changes while preserving the rest of the document, and output the FULL revised document again in the same format (document, then ---NOTES---, then notes).`;
+
+const DRAFT_CATEGORIES = [
+  { icon: `<rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>`, label: "NDA", prompt: "Draft a mutual non-disclosure agreement between two companies" },
+  { icon: `<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/>`, label: "Affidavit", prompt: "Draft a general affidavit of facts" },
+  { icon: `<path d="M4 4h16v16H4z"/><path d="M4 4l8 8 8-8"/>`, label: "Demand letter", prompt: "Draft a demand letter for an unpaid invoice" },
+  { icon: `<path d="M3 10l9-7 9 7"/><path d="M5 9v11h14V9"/>`, label: "Tenancy", prompt: "Draft a residential tenancy agreement" },
+];
+
+function renderDraftSuggestions(){
+  const row = document.getElementById("draftSuggestionGrid");
+  row.innerHTML = "";
+  DRAFT_CATEGORIES.forEach(c => {
+    const chip = document.createElement("div");
+    chip.className = "chip";
+    chip.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${c.icon}</svg><span>${c.label}</span>`;
+    chip.addEventListener("click", () => generateDraft(c.prompt));
+    row.appendChild(chip);
+  });
+}
+
+function newDraft(){
+  const d = { id: uid(), title: "New draft", versions: [], currentVersionIdx: -1, notes: "" };
+  drafts.unshift(d);
+  activeDraftId = d.id;
+  saveThreads();
+  return d;
+}
+
+function activeDraft(){ return drafts.find(d => d.id === activeDraftId); }
+
+function deleteDraft(id){
+  drafts = drafts.filter(d => d.id !== id);
+  if(activeDraftId === id) activeDraftId = null;
+  saveThreads();
+}
+
+function parseDraftResponse(raw){
+  const marker = "---NOTES---";
+  const idx = raw.indexOf(marker);
+  if(idx === -1) return { doc: raw.trim(), notes: "" };
+  return { doc: raw.slice(0, idx).trim(), notes: raw.slice(idx + marker.length).trim() };
+}
+
+function renderDraftList(){
+  const list = document.getElementById("draftList");
+  list.innerHTML = "";
+  drafts.forEach(d => {
+    const el = document.createElement("div");
+    el.className = "thread-item" + (d.id === activeDraftId ? " active" : "");
+    el.innerHTML = `<span class="thread-item-title">${escapeHtml(d.title)}</span><button class="thread-delete" title="Delete"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg></button>`;
+    el.querySelector(".thread-item-title").addEventListener("click", () => { activeDraftId = d.id; showDraftView(); closeSidebarMobile(); });
+    el.querySelector(".thread-delete").addEventListener("click", (e) => {
+      e.stopPropagation();
+      deleteDraft(d.id);
+      if(activeDraft()) showDraftView(); else showDraftHome();
+      renderDraftList();
+    });
+    list.appendChild(el);
+  });
+}
+
+function showDraftHome(){
+  document.getElementById("draftHome").style.display = "flex";
+  document.getElementById("draftView").style.display = "none";
+  document.getElementById("draftFollowup").style.display = "none";
+  document.getElementById("threadTitle").textContent = "";
+  activeDraftId = null;
+  renderDraftList();
+}
+
+function showDraftView(){
+  const d = activeDraft();
+  if(!d){ showDraftHome(); return; }
+  document.getElementById("draftHome").style.display = "none";
+  document.getElementById("draftView").style.display = "flex";
+  document.getElementById("draftFollowup").style.display = "block";
+  document.getElementById("threadTitle").textContent = d.title;
+  draftEditing = false;
+  renderDraftView();
+  renderDraftList();
+}
+
+function renderDraftView(){
+  const d = activeDraft();
+  if(!d) return;
+  const page = document.getElementById("draftPage");
+  const editEl = document.getElementById("draftPageEdit");
+  const verLabel = document.getElementById("draftVerLabel");
+  const prevBtn = document.getElementById("draftVerPrev");
+  const nextBtn = document.getElementById("draftVerNext");
+  const notesEl = document.getElementById("draftNotes");
+
+  page.style.display = draftEditing ? "none" : "block";
+  editEl.style.display = draftEditing ? "block" : "none";
+
+  if(loading && d.versions.length === 0){
+    page.innerHTML = `<div class="thinking-row"><div class="gavel-loader"><svg viewBox="0 0 36 36" fill="currentColor"><g transform="rotate(-32 18 15)"><rect x="9" y="4" width="17" height="8" rx="2.6"/><rect x="14.7" y="12" width="5.6" height="17" rx="2.6"/></g><rect x="5" y="29.5" width="15" height="4.2" rx="2.1"/></svg></div><div class="thinking-label">Drafting…</div></div>`;
+    verLabel.textContent = "";
+    prevBtn.disabled = true;
+    nextBtn.disabled = true;
+    notesEl.style.display = "none";
+    return;
+  }
+
+  const v = d.versions[d.currentVersionIdx];
+  if(!v) return;
+  page.innerHTML = formatAnswer(v.content);
+  verLabel.textContent = `v${d.currentVersionIdx + 1} of ${d.versions.length}${loading ? " — revising…" : ""}`;
+  prevBtn.disabled = d.currentVersionIdx <= 0;
+  nextBtn.disabled = d.currentVersionIdx >= d.versions.length - 1;
+
+  if(d.notes){
+    notesEl.style.display = "block";
+    notesEl.innerHTML = `<strong>Notes:</strong> ${escapeHtml(d.notes)}`;
+  } else {
+    notesEl.style.display = "none";
+  }
+}
+
+async function generateDraft(text){
+  const content = text.trim();
+  if(!content || loading) return;
+  const d = newDraft();
+  d.title = content.slice(0, 46) + (content.length > 46 ? "…" : "");
+  showDraftView();
+  loading = true;
+  renderDraftView();
+  document.getElementById("draftInput").value = "";
+  updateDraftSendState();
+
+  try{
+    const reply = await callClaude([{ role: "user", content }], DRAFTING_SYSTEM_PROMPT);
+    const { doc, notes } = parseDraftResponse(reply.text);
+    d.versions.push({ content: doc, createdAt: Date.now() });
+    d.currentVersionIdx = 0;
+    d.notes = notes;
+  } catch(e){
+    d.versions.push({ content: "Something went wrong generating this draft. Please try again.", createdAt: Date.now() });
+    d.currentVersionIdx = 0;
+  } finally {
+    loading = false;
+    renderDraftView();
+    renderDraftList();
+    saveThreads();
+  }
+}
+
+async function reviseDraft(text){
+  const d = activeDraft();
+  const content = text.trim();
+  if(!content || loading || !d || d.versions.length === 0) return;
+  loading = true;
+  renderDraftView();
+  document.getElementById("draftReviseInput").value = "";
+  updateDraftSendState();
+
+  const currentDoc = d.versions[d.currentVersionIdx].content;
+  const message = `Here is the current draft:\n\n${currentDoc}\n\nRevision requested: ${content}\n\nOutput the full revised document (same format as before: document, then ---NOTES---, then notes).`;
+
+  try{
+    const reply = await callClaude([{ role: "user", content: message }], DRAFTING_SYSTEM_PROMPT);
+    const { doc, notes } = parseDraftResponse(reply.text);
+    d.versions.push({ content: doc, createdAt: Date.now() });
+    d.currentVersionIdx = d.versions.length - 1;
+    d.notes = notes;
+  } catch(e){
+    d.notes = "Something went wrong revising this draft. Please try again.";
+  } finally {
+    loading = false;
+    renderDraftView();
+    saveThreads();
+  }
+}
+
+function updateDraftSendState(){
+  document.getElementById("draftSendBtn").disabled = !document.getElementById("draftInput").value.trim() || loading;
+  document.getElementById("draftReviseSendBtn").disabled = !document.getElementById("draftReviseInput").value.trim() || loading;
+}
+
+const draftInput = document.getElementById("draftInput");
+draftInput.addEventListener("input", () => { autoGrow(draftInput); updateDraftSendState(); });
+draftInput.addEventListener("keydown", e => { if(e.key === "Enter" && !e.shiftKey){ e.preventDefault(); generateDraft(draftInput.value); } });
+document.getElementById("draftSendBtn").addEventListener("click", () => generateDraft(draftInput.value));
+
+const draftReviseInput = document.getElementById("draftReviseInput");
+draftReviseInput.addEventListener("input", () => { autoGrow(draftReviseInput); updateDraftSendState(); });
+draftReviseInput.addEventListener("keydown", e => { if(e.key === "Enter" && !e.shiftKey){ e.preventDefault(); reviseDraft(draftReviseInput.value); } });
+document.getElementById("draftReviseSendBtn").addEventListener("click", () => reviseDraft(draftReviseInput.value));
+
+document.getElementById("draftVerPrev").addEventListener("click", () => {
+  const d = activeDraft();
+  if(!d || d.currentVersionIdx <= 0) return;
+  d.currentVersionIdx--;
+  renderDraftView();
+});
+document.getElementById("draftVerNext").addEventListener("click", () => {
+  const d = activeDraft();
+  if(!d || d.currentVersionIdx >= d.versions.length - 1) return;
+  d.currentVersionIdx++;
+  renderDraftView();
+});
+
+document.getElementById("draftEditBtn").addEventListener("click", () => {
+  const d = activeDraft();
+  if(!d || d.versions.length === 0) return;
+  const editEl = document.getElementById("draftPageEdit");
+  if(!draftEditing){
+    editEl.value = d.versions[d.currentVersionIdx].content;
+    draftEditing = true;
+    renderDraftView();
+    editEl.focus();
+  } else {
+    const newContent = editEl.value;
+    if(newContent !== d.versions[d.currentVersionIdx].content){
+      d.versions.push({ content: newContent, createdAt: Date.now() });
+      d.currentVersionIdx = d.versions.length - 1;
+      saveThreads();
+    }
+    draftEditing = false;
+    renderDraftView();
+  }
+});
+
+document.getElementById("draftCopyBtn").addEventListener("click", () => {
+  const d = activeDraft();
+  if(!d || !d.versions[d.currentVersionIdx]) return;
+  navigator.clipboard?.writeText(d.versions[d.currentVersionIdx].content).catch(() => {});
+});
+
+document.getElementById("draftDownloadBtn").addEventListener("click", () => {
+  const d = activeDraft();
+  if(!d || !d.versions[d.currentVersionIdx]) return;
+  const blob = new Blob([d.versions[d.currentVersionIdx].content], { type: "text/plain" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = (d.title || "draft").replace(/[^\w\- ]/g, "").trim() + ".txt";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+});
+
+function switchMode(mode){
+  currentMode = mode;
+  document.getElementById("navResearch").classList.toggle("active", mode === "research");
+  document.getElementById("navDrafting").classList.toggle("active", mode === "drafting");
+  document.getElementById("navStudent").classList.toggle("active", mode === "student");
+  document.getElementById("threadList").style.display = mode === "research" ? "block" : "none";
+  document.getElementById("draftList").style.display = mode === "drafting" ? "block" : "none";
+  document.getElementById("studentList").style.display = mode === "student" ? "block" : "none";
+  document.getElementById("newChatLabel").textContent = mode === "research" ? "New chat" : mode === "drafting" ? "New draft" : "New session";
+
+  // Hide every top-level screen from every mode first, then show only
+  // what the target mode needs — avoids stale screens leaking through.
+  ["home","threadView","followup","draftHome","draftView","draftFollowup",
+   "studentHome","flashcardView","quizView","studyResult"].forEach(id => {
+    document.getElementById(id).style.display = "none";
+  });
+
+  if(mode === "research"){
+    if(activeId && threads.find(t => t.id === activeId)) showThread(); else showHome();
+  } else if(mode === "drafting"){
+    if(activeDraftId && drafts.find(d => d.id === activeDraftId)) showDraftView(); else showDraftHome();
+  } else {
+    if(activeStudyId && studyDecks.find(d => d.id === activeStudyId)){
+      const d = studyDecks.find(x => x.id === activeStudyId);
+      if(d.type === "flashcards") startFlashcardSession(d); else startQuizSession(d);
+      renderStudyList();
+    } else {
+      showStudentHome();
+    }
+  }
+  closeSidebarMobile();
+}
+
+document.getElementById("navResearch").addEventListener("click", () => switchMode("research"));
+document.getElementById("navDrafting").addEventListener("click", () => switchMode("drafting"));
+document.getElementById("navStudent").addEventListener("click", () => switchMode("student"));
+
+renderDraftSuggestions();
+
+/* ==================== STUDENT MODE ==================== */
+
+const FLASHCARD_SYSTEM_PROMPT = `You generate study flashcards for law students. Output ONLY valid JSON, no markdown code fences, no commentary before or after, in exactly this shape:
+{"cards":[{"front":"...","back":"..."}]}
+Generate 8 to 12 cards covering the key concepts, elements, and rules for the requested topic. "front" is a question or term; "back" is the concise answer or definition. Be accurate. Do not fabricate specific case names, citations, or statutory section numbers — if a card would need one and you are not confident of the exact reference, phrase the card around the general principle instead.`;
+
+const QUIZ_SYSTEM_PROMPT = `You generate multiple-choice practice quizzes for law students. This is AI-generated practice material for revision, NOT verified real past exam questions — never claim or imply these came from an actual exam paper. Output ONLY valid JSON, no markdown code fences, no commentary before or after, in exactly this shape:
+{"questions":[{"question":"...","options":["...","...","...","..."],"correctIndex":0,"explanation":"..."}]}
+Generate 6 to 8 questions with exactly 4 options each, covering key concepts for the requested topic. Do not fabricate specific case citations or section numbers; if referencing a case or statute, only do so if you are confident it is accurate, otherwise phrase the question around the general principle instead.`;
+
+const STUDENT_CATEGORIES = [
+  { icon: `<path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>`, label: "Contract law", prompt: "Offer, acceptance and consideration in contract law" },
+  { icon: `<circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 3"/>`, label: "Torts", prompt: "Negligence and duty of care in tort law" },
+  { icon: `<path d="M12 3v18M5 8l7-5 7 5M5 8l-2 9a2 2 0 0 0 2 2h4M19 8l2 9a2 2 0 0 1-2 2h-4"/>`, label: "Constitutional law", prompt: "Fundamental rights under the Nigerian Constitution" },
+  { icon: `<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>`, label: "Evidence", prompt: "Rules on admissibility of evidence" },
+];
+
+function renderStudentSuggestions(){
+  const row = document.getElementById("studentSuggestionGrid");
+  row.innerHTML = "";
+  STUDENT_CATEGORIES.forEach(c => {
+    const chip = document.createElement("div");
+    chip.className = "chip";
+    chip.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${c.icon}</svg><span>${c.label}</span>`;
+    chip.addEventListener("click", () => generateStudySet(c.prompt, studyMode));
+    row.appendChild(chip);
+  });
+}
+
+function extractJson(raw){
+  let text = raw.trim();
+  const fenceMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if(fenceMatch) text = fenceMatch[1].trim();
+  return JSON.parse(text);
+}
+
+function studyLoadingHtml(label){
+  return `<div class="thinking-row" style="padding:0;"><div class="gavel-loader"><svg viewBox="0 0 36 36" fill="currentColor"><g transform="rotate(-32 18 15)"><rect x="9" y="4" width="17" height="8" rx="2.6"/><rect x="14.7" y="12" width="5.6" height="17" rx="2.6"/></g><rect x="5" y="29.5" width="15" height="4.2" rx="2.1"/></svg></div><div class="thinking-label">${label}</div></div>`;
+}
+
+function showStudentHome(){
+  document.getElementById("flashcardView").style.display = "none";
+  document.getElementById("quizView").style.display = "none";
+  document.getElementById("studyResult").style.display = "none";
+  document.getElementById("studentHome").style.display = "flex";
+  document.getElementById("threadTitle").textContent = "";
+  activeStudyId = null;
+  renderStudyList();
+}
+
+function showStudyError(type){
+  document.getElementById("flashcardView").style.display = "none";
+  document.getElementById("quizView").style.display = "none";
+  document.getElementById("studyResult").style.display = "flex";
+  document.getElementById("resultTitle").textContent = "Couldn't generate that";
+  document.getElementById("resultDetail").textContent = "Try a different or more specific topic, or try again.";
+}
+
+async function generateStudySet(topic, type){
+  const content = topic.trim();
+  if(!content || loading) return;
+  const deck = { id: uid(), title: content.slice(0, 46) + (content.length > 46 ? "…" : ""), type, cards: [], questions: [] };
+
+  document.getElementById("studentHome").style.display = "none";
+  document.getElementById("studyResult").style.display = "none";
+  loading = true;
+  document.getElementById("studentInput").value = "";
+  updateStudentSendState();
+
+  if(type === "flashcards"){
+    document.getElementById("quizView").style.display = "none";
+    document.getElementById("flashcardView").style.display = "flex";
+    document.getElementById("fcControls").style.display = "none";
+    document.getElementById("fcHint").textContent = "";
+    document.getElementById("fcBack").style.display = "none";
+    document.getElementById("fcFront").style.display = "flex";
+    document.getElementById("fcFront").innerHTML = studyLoadingHtml("Building flashcards…");
+    document.getElementById("fcProgressLabel").textContent = "";
+    document.getElementById("fcKnownLabel").textContent = "";
+  } else {
+    document.getElementById("flashcardView").style.display = "none";
+    document.getElementById("quizView").style.display = "flex";
+    document.getElementById("qzOptions").innerHTML = "";
+    document.getElementById("qzExplanation").style.display = "none";
+    document.getElementById("qzNextBtn").style.display = "none";
+    document.getElementById("qzQuestion").innerHTML = studyLoadingHtml("Building your quiz…");
+    document.getElementById("qzProgressLabel").textContent = "";
+    document.getElementById("qzScoreLabel").textContent = "";
+  }
+
+  const sysPrompt = type === "flashcards" ? FLASHCARD_SYSTEM_PROMPT : QUIZ_SYSTEM_PROMPT;
+  const userMsg = type === "flashcards"
+    ? `Generate flashcards for studying: ${content}`
+    : `Generate a practice quiz for studying: ${content}`;
+
+  try{
+    const reply = await callClaude([{ role: "user", content: userMsg }], sysPrompt);
+    const parsed = extractJson(reply.text);
+    if(type === "flashcards"){
+      deck.cards = Array.isArray(parsed.cards) ? parsed.cards.filter(c => c.front && c.back) : [];
+      if(deck.cards.length === 0) throw new Error("No cards generated");
+      studyDecks.unshift(deck);
+      activeStudyId = deck.id;
+      startFlashcardSession(deck);
+    } else {
+      deck.questions = Array.isArray(parsed.questions) ? parsed.questions.filter(q => q.question && Array.isArray(q.options) && q.options.length >= 2) : [];
+      if(deck.questions.length === 0) throw new Error("No questions generated");
+      studyDecks.unshift(deck);
+      activeStudyId = deck.id;
+      startQuizSession(deck);
+    }
+  } catch(e){
+    showStudyError(type);
+  } finally {
+    loading = false;
+    saveThreads();
+    renderStudyList();
+  }
+}
+
+/* ---- flashcards ---- */
+let fcSequence = [], fcReviewQueue = [], fcIndex = 0, fcKnownCount = 0, fcFlipped = false;
+
+function startFlashcardSession(deck){
+  fcSequence = deck.cards.slice();
+  fcReviewQueue = [];
+  fcIndex = 0;
+  fcKnownCount = 0;
+  fcFlipped = false;
+  document.getElementById("studentHome").style.display = "none";
+  document.getElementById("studyResult").style.display = "none";
+  document.getElementById("quizView").style.display = "none";
+  document.getElementById("flashcardView").style.display = "flex";
+  document.getElementById("threadTitle").textContent = deck.title;
+  renderFlashcard();
+}
+
+function renderFlashcard(){
+  const card = fcSequence[fcIndex];
+  document.getElementById("fcProgressLabel").textContent = `Card ${fcIndex + 1} of ${fcSequence.length}`;
+  document.getElementById("fcKnownLabel").textContent = `${fcKnownCount} known`;
+  document.getElementById("fcFront").textContent = card.front;
+  document.getElementById("fcFront").style.display = "flex";
+  document.getElementById("fcBack").textContent = card.back;
+  document.getElementById("fcBack").style.display = "none";
+  document.getElementById("fcHint").textContent = "Tap the card to flip";
+  document.getElementById("fcControls").style.display = "none";
+  fcFlipped = false;
+}
+
+document.getElementById("flashcard").addEventListener("click", () => {
+  if(fcSequence.length === 0 || loading) return;
+  fcFlipped = !fcFlipped;
+  document.getElementById("fcFront").style.display = fcFlipped ? "none" : "flex";
+  document.getElementById("fcBack").style.display = fcFlipped ? "flex" : "none";
+  document.getElementById("fcHint").textContent = fcFlipped ? "" : "Tap the card to flip";
+  document.getElementById("fcControls").style.display = fcFlipped ? "flex" : "none";
+});
+
+function advanceFlashcard(knewIt){
+  if(knewIt) fcKnownCount++;
+  else fcReviewQueue.push(fcSequence[fcIndex]);
+  fcIndex++;
+  if(fcIndex >= fcSequence.length){
+    if(fcReviewQueue.length > 0){
+      fcSequence = fcReviewQueue;
+      fcReviewQueue = [];
+      fcIndex = 0;
+    } else {
+      document.getElementById("flashcardView").style.display = "none";
+      document.getElementById("studyResult").style.display = "flex";
+      document.getElementById("resultTitle").textContent = "Deck complete";
+      document.getElementById("resultDetail").textContent = `You knew ${fcKnownCount} card${fcKnownCount === 1 ? "" : "s"} along the way.`;
+      return;
+    }
+  }
+  renderFlashcard();
+}
+
+document.getElementById("fcKnownBtn").addEventListener("click", () => advanceFlashcard(true));
+document.getElementById("fcAgainBtn").addEventListener("click", () => advanceFlashcard(false));
+
+/* ---- quiz ---- */
+let qzQuestions = [], qzIndex = 0, qzScore = 0, qzAnswered = false;
+
+function startQuizSession(deck){
+  qzQuestions = deck.questions.slice();
+  qzIndex = 0;
+  qzScore = 0;
+  document.getElementById("studentHome").style.display = "none";
+  document.getElementById("studyResult").style.display = "none";
+  document.getElementById("flashcardView").style.display = "none";
+  document.getElementById("quizView").style.display = "flex";
+  document.getElementById("threadTitle").textContent = deck.title;
+  renderQuizQuestion();
+}
+
+function renderQuizQuestion(){
+  qzAnswered = false;
+  const q = qzQuestions[qzIndex];
+  document.getElementById("qzProgressLabel").textContent = `Question ${qzIndex + 1} of ${qzQuestions.length}`;
+  document.getElementById("qzScoreLabel").textContent = `Score: ${qzScore}`;
+  document.getElementById("qzQuestion").textContent = q.question;
+  const optsWrap = document.getElementById("qzOptions");
+  optsWrap.innerHTML = "";
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement("div");
+    btn.className = "quiz-option";
+    btn.textContent = opt;
+    btn.addEventListener("click", () => selectQuizOption(i));
+    optsWrap.appendChild(btn);
+  });
+  document.getElementById("qzExplanation").style.display = "none";
+  document.getElementById("qzNextBtn").style.display = "none";
+}
+
+function selectQuizOption(selectedIdx){
+  if(qzAnswered) return;
+  qzAnswered = true;
+  const q = qzQuestions[qzIndex];
+  const opts = document.querySelectorAll("#qzOptions .quiz-option");
+  opts.forEach((el, i) => {
+    el.classList.add("locked");
+    if(i === q.correctIndex) el.classList.add("correct");
+    else if(i === selectedIdx) el.classList.add("incorrect");
+  });
+  if(selectedIdx === q.correctIndex) qzScore++;
+  document.getElementById("qzScoreLabel").textContent = `Score: ${qzScore}`;
+  if(q.explanation){
+    document.getElementById("qzExplanation").style.display = "block";
+    document.getElementById("qzExplanation").textContent = q.explanation;
+  }
+  document.getElementById("qzNextBtn").style.display = "block";
+}
+
+document.getElementById("qzNextBtn").addEventListener("click", () => {
+  qzIndex++;
+  if(qzIndex >= qzQuestions.length){
+    document.getElementById("quizView").style.display = "none";
+    document.getElementById("studyResult").style.display = "flex";
+    document.getElementById("resultTitle").textContent = "Quiz complete";
+    document.getElementById("resultDetail").textContent = `You scored ${qzScore} out of ${qzQuestions.length}.`;
+    return;
+  }
+  renderQuizQuestion();
+});
+
+document.getElementById("studyRestartBtn").addEventListener("click", () => {
+  document.getElementById("studyResult").style.display = "none";
+  showStudentHome();
+});
+
+/* ---- student home controls ---- */
+document.getElementById("studyModeFlashcards").addEventListener("click", () => {
+  studyMode = "flashcards";
+  document.getElementById("studyModeFlashcards").classList.add("on");
+  document.getElementById("studyModeQuiz").classList.remove("on");
+});
+document.getElementById("studyModeQuiz").addEventListener("click", () => {
+  studyMode = "quiz";
+  document.getElementById("studyModeQuiz").classList.add("on");
+  document.getElementById("studyModeFlashcards").classList.remove("on");
+});
+
+const studentInput = document.getElementById("studentInput");
+studentInput.addEventListener("input", () => { autoGrow(studentInput); updateStudentSendState(); });
+studentInput.addEventListener("keydown", e => { if(e.key === "Enter" && !e.shiftKey){ e.preventDefault(); generateStudySet(studentInput.value, studyMode); } });
+document.getElementById("studentSendBtn").addEventListener("click", () => generateStudySet(studentInput.value, studyMode));
+
+function updateStudentSendState(){
+  document.getElementById("studentSendBtn").disabled = !studentInput.value.trim() || loading;
+}
+
+function renderStudyList(){
+  const list = document.getElementById("studentList");
+  list.innerHTML = "";
+  studyDecks.forEach(d => {
+    const el = document.createElement("div");
+    el.className = "thread-item" + (d.id === activeStudyId ? " active" : "");
+    const kindLabel = d.type === "flashcards" ? "Cards" : "Quiz";
+    el.innerHTML = `<span class="thread-item-title">${escapeHtml(d.title)} · ${kindLabel}</span><button class="thread-delete" title="Delete"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg></button>`;
+    el.querySelector(".thread-item-title").addEventListener("click", () => {
+      activeStudyId = d.id;
+      if(d.type === "flashcards") startFlashcardSession(d); else startQuizSession(d);
+      closeSidebarMobile();
+    });
+    el.querySelector(".thread-delete").addEventListener("click", (e) => {
+      e.stopPropagation();
+      studyDecks = studyDecks.filter(x => x.id !== d.id);
+      if(activeStudyId === d.id) activeStudyId = null;
+      saveThreads();
+      showStudentHome();
+    });
+    list.appendChild(el);
+  });
+}
+
+renderStudentSuggestions();
+
 renderSuggestions();
-showHome();
+loadThreads();
+if(activeId && threads.find(t => t.id === activeId)){
+  showThread();
+} else {
+  showHome();
+}
 </script>
 </body>
 </html>
