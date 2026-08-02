@@ -130,6 +130,24 @@
   .composer-actions{ display:flex; align-items:center; gap:6px; margin-left:auto; }
   .plus-btn{ width:32px; height:32px; border-radius:50%; background:transparent; border:1px solid var(--line); color:var(--ink); display:flex; align-items:center; justify-content:center; cursor:pointer; transition:background .12s, border-color .12s; flex-shrink:0; }
   .plus-btn:hover{ background:var(--hover); border-color:var(--ink); }
+
+  .search-toggle-btn{
+    width:34px; height:34px; border-radius:50%; background:transparent; border:1px solid var(--line); color:var(--ink);
+    display:flex; align-items:center; justify-content:center; cursor:pointer; transition:background .12s, border-color .12s, color .12s; flex-shrink:0;
+  }
+  .search-toggle-btn:hover{ background:var(--hover); border-color:var(--ink); }
+  .search-toggle-btn.active{ background:var(--ink); color:var(--inv); border-color:var(--ink); }
+
+  .attach-chip-row{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; }
+  .attach-chip{
+    display:flex; align-items:center; gap:7px; background:var(--hover); border:1px solid var(--line); border-radius:9px;
+    padding:6px 9px 6px 10px; font-size:12.5px; color:var(--ink); max-width:220px;
+  }
+  .attach-chip svg{ flex-shrink:0; color:var(--dim); }
+  .attach-chip span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .attach-chip-remove{ flex-shrink:0; background:transparent; border:none; color:var(--faint); cursor:pointer; padding:2px; display:flex; border-radius:4px; }
+  .attach-chip-remove:hover{ color:var(--ink); background:var(--line); }
+
   .voice-btn{ width:34px; height:34px; border-radius:50%; background:var(--ink); color:var(--inv); border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:opacity .12s; flex-shrink:0; }
   .voice-btn:hover{ opacity:.82; }
   .voice-btn.listening{ animation:voicePulse 1s ease-in-out infinite; }
@@ -237,6 +255,10 @@
   .user-bubble{
     max-width:78%; background:var(--ink); color:var(--inv); font-size:15px; line-height:1.55;
     padding:11px 16px; border-radius:16px 16px 4px 16px; white-space:pre-wrap; word-break:break-word;
+  }
+  .msg-attach-chip{
+    display:flex; align-items:center; gap:6px; background:rgba(255,255,255,0.14); border-radius:7px;
+    padding:5px 9px; margin-bottom:7px; font-size:12px; color:var(--inv); width:fit-content;
   }
   .user-actions{ display:flex; justify-content:flex-end; gap:1px; margin-top:5px; }
   .user-actions button{ background:transparent; border:none; color:var(--faint); cursor:pointer; padding:6px; border-radius:7px; display:flex; transition:background .12s, color .12s; }
@@ -364,6 +386,8 @@
 <body>
 
 <div class="app">
+  <input type="file" id="fileInput" accept=".pdf,.png,.jpg,.jpeg,.webp,.txt" style="display:none;">
+
   <div class="backdrop" id="backdrop"></div>
 
   <div class="sidebar" id="sidebar">
@@ -533,15 +557,19 @@
         </div>
 
         <div class="composer" id="homeComposer">
+          <div class="attach-chip-row" id="homeAttachChip"></div>
           <div class="composer-row">
             <textarea id="homeInput" rows="1" placeholder="How can Lex help you today?"></textarea>
           </div>
           <div class="composer-foot">
-            <button class="plus-btn" title="Attach image">
+            <button class="plus-btn" id="homeAttachBtn" title="Attach a document">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             </button>
             <span class="model-pill">Lex 1.0</span>
             <div class="composer-actions">
+              <button class="search-toggle-btn" id="homeSearchBtn" title="Give Lex internet access for this question — search &amp; read linked pages">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              </button>
               <button class="voice-btn" id="homeVoiceBtn" title="Voice input">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="10" x2="5" y2="14"/><line x1="9" y1="6" x2="9" y2="18"/><line x1="13" y1="3" x2="13" y2="21"/><line x1="17" y1="7" x2="17" y2="17"/><line x1="21" y1="10" x2="21" y2="14"/></svg>
               </button>
@@ -566,15 +594,19 @@
     <div class="followup" id="followup" style="display:none;">
       <div class="followup-inner">
         <div class="composer" id="followComposer">
+          <div class="attach-chip-row" id="followAttachChip"></div>
           <div class="composer-row">
             <textarea id="followInput" rows="1" placeholder="Ask a follow-up…"></textarea>
           </div>
           <div class="composer-foot">
-            <button class="plus-btn" title="Attach image">
+            <button class="plus-btn" id="followAttachBtn" title="Attach a document">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             </button>
             <span class="model-pill">Lex 1.0</span>
             <div class="composer-actions">
+              <button class="search-toggle-btn" id="followSearchBtn" title="Give Lex internet access for this question — search &amp; read linked pages">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              </button>
               <button class="voice-btn" id="followVoiceBtn" title="Voice input">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="10" x2="5" y2="14"/><line x1="9" y1="6" x2="9" y2="18"/><line x1="13" y1="3" x2="13" y2="21"/><line x1="17" y1="7" x2="17" y2="17"/><line x1="21" y1="10" x2="21" y2="14"/></svg>
               </button>
@@ -792,6 +824,8 @@ let draftEditing = false;
 let studyDecks = [];
 let activeStudyId = null;
 let studyMode = "flashcards";
+let pendingAttachment = null;
+let searchEnabled = false;
 let currentMode = "research";
 
 const STORAGE_KEY = "lexai_threads_v1";
@@ -997,7 +1031,7 @@ function renderThreadInner(){
     if(m.role === "user"){
       row.className = "msg-row user";
       row.innerHTML = `
-        <div class="user-bubble" data-index="${i}">${escapeHtml(m.content)}</div>
+        <div class="user-bubble" data-index="${i}">${m.attachmentName ? `<div class="msg-attach-chip"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>${escapeHtml(m.attachmentName)}</span></div>` : ""}${escapeHtml(m.displayContent !== undefined ? m.displayContent : m.content)}</div>
         <div class="user-actions" data-index="${i}">
           <button class="uact-retry" title="Retry"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12a9 9 0 1 1-3-6.7"/><polyline points="21 3 21 9 15 9"/></svg></button>
           <button class="uact-edit" title="Edit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></button>
@@ -1052,14 +1086,19 @@ function renderThreadInner(){
   saveThreads();
 }
 
-async function callClaude(threadMessages, systemPrompt){
-  const payload = threadMessages.map(m => ({ role: m.role, content: m.content }));
+async function callClaude(threadMessages, systemPrompt, useSearch){
+  const payload = threadMessages.map(m => ({
+    role: m.role,
+    content: m.content,
+    ...(m.attachment ? { attachment: m.attachment } : {}),
+  }));
   const response = await fetch("/api/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       system: systemPrompt || SYSTEM_PROMPT,
       messages: payload,
+      useSearch: !!useSearch,
     }),
   });
   const data = await response.json();
@@ -1074,12 +1113,32 @@ async function callClaude(threadMessages, systemPrompt){
   };
 }
 
+function buildUserMessage(typedText){
+  const content = typedText.trim();
+  if(!pendingAttachment) return { role: "user", content, displayContent: content };
+  if(pendingAttachment.kind === "text"){
+    const combined = `Document "${pendingAttachment.name}":\n\n${pendingAttachment.text}\n\n${content || "Please summarize this document."}`;
+    return { role: "user", content: combined, displayContent: content || "Please summarize this document.", attachmentName: pendingAttachment.name };
+  }
+  return {
+    role: "user",
+    content: content || "Please review this document and summarize it.",
+    displayContent: content || "Please review this document and summarize it.",
+    attachment: { mimeType: pendingAttachment.mimeType, data: pendingAttachment.data },
+    attachmentName: pendingAttachment.name,
+  };
+}
+
 async function startResearch(text){
   const content = text.trim();
-  if(!content || loading) return;
+  if(!content && !pendingAttachment) return;
+  if(loading) return;
   const t = newThread();
-  t.title = content.slice(0,46) + (content.length > 46 ? "…" : "");
-  t.messages.push({ role: "user", content });
+  const msg = buildUserMessage(text);
+  t.title = (msg.attachmentName ? `📎 ${msg.attachmentName}` : content.slice(0,46) + (content.length > 46 ? "…" : ""));
+  t.messages.push(msg);
+  const usedSearch = searchEnabled;
+  clearAttachment();
   showThread();
   loading = true;
   renderThreadInner();
@@ -1088,7 +1147,7 @@ async function startResearch(text){
   updateSendStates();
 
   try{
-    const reply = await callClaude(t.messages);
+    const reply = await callClaude(t.messages, undefined, usedSearch);
     t.messages.push({ role: "assistant", content: reply.text, thinking: reply.thinking, sources: reply.sources });
   } catch(e){
     t.messages.push({ role: "assistant", content: "Something went wrong reaching the AI service. Please try again in a moment.", isError: true });
@@ -1167,13 +1226,13 @@ function wireUserActions(){
 
     const copyBtn = bar.querySelector(".uact-copy");
     copyBtn.addEventListener("click", () => {
-      navigator.clipboard?.writeText(msg.content).catch(() => {});
+      navigator.clipboard?.writeText(msg.displayContent !== undefined ? msg.displayContent : msg.content).catch(() => {});
       copyBtn.classList.add("active");
       setTimeout(() => copyBtn.classList.remove("active"), 900);
     });
 
     bar.querySelector(".uact-edit").addEventListener("click", () => {
-      const content = msg.content;
+      const content = msg.displayContent !== undefined ? msg.displayContent : msg.content;
       t.messages = t.messages.slice(0, idx);
       renderThreadInner();
       const input = document.getElementById("followInput");
@@ -1185,10 +1244,10 @@ function wireUserActions(){
 
     bar.querySelector(".uact-retry").addEventListener("click", async () => {
       if(loading) return;
-      // Re-send this exact question, dropping it and everything after,
-      // then asking again as a fresh turn.
+      // Re-send the exact original message (including any attachment),
+      // dropping it and everything after, then asking again as a fresh turn.
       t.messages = t.messages.slice(0, idx);
-      t.messages.push({ role: "user", content: msg.content });
+      t.messages.push({ ...msg });
       loading = true;
       renderThreadInner();
       try{
@@ -1249,7 +1308,8 @@ document.getElementById("ctxBackdrop").addEventListener("click", closeCtxMenu);
 document.getElementById("ctxCopy").addEventListener("click", () => {
   const t = activeThread();
   if(t && ctxTargetIndex !== null){
-    navigator.clipboard?.writeText(t.messages[ctxTargetIndex].content).catch(() => {});
+    const m = t.messages[ctxTargetIndex];
+    navigator.clipboard?.writeText(m.displayContent !== undefined ? m.displayContent : m.content).catch(() => {});
   }
   closeCtxMenu();
 });
@@ -1271,7 +1331,8 @@ document.getElementById("ctxSelect").addEventListener("click", () => {
 document.getElementById("ctxEdit").addEventListener("click", () => {
   const t = activeThread();
   if(t && ctxTargetIndex !== null){
-    const content = t.messages[ctxTargetIndex].content;
+    const m = t.messages[ctxTargetIndex];
+    const content = m.displayContent !== undefined ? m.displayContent : m.content;
     t.messages = t.messages.slice(0, ctxTargetIndex);
     renderThreadInner();
     const input = document.getElementById("followInput");
@@ -1284,20 +1345,22 @@ document.getElementById("ctxEdit").addEventListener("click", () => {
 });
 
 async function followUp(text){
-
-
   const content = text.trim();
-  if(!content || loading) return;
+  if(!content && !pendingAttachment) return;
+  if(loading) return;
   const t = activeThread();
   if(!t) return;
-  t.messages.push({ role: "user", content });
+  const msg = buildUserMessage(text);
+  t.messages.push(msg);
+  const usedSearch = searchEnabled;
+  clearAttachment();
   loading = true;
   renderThreadInner();
   document.getElementById("followInput").value = "";
   updateSendStates();
 
   try{
-    const reply = await callClaude(t.messages);
+    const reply = await callClaude(t.messages, undefined, usedSearch);
     t.messages.push({ role: "assistant", content: reply.text, thinking: reply.thinking, sources: reply.sources });
   } catch(e){
     t.messages.push({ role: "assistant", content: "Something went wrong reaching the AI service. Please try again in a moment.", isError: true });
@@ -1308,8 +1371,8 @@ async function followUp(text){
 }
 
 function updateSendStates(){
-  document.getElementById("homeSendBtn").disabled = !document.getElementById("homeInput").value.trim() || loading;
-  document.getElementById("followSendBtn").disabled = !document.getElementById("followInput").value.trim() || loading;
+  document.getElementById("homeSendBtn").disabled = (!document.getElementById("homeInput").value.trim() && !pendingAttachment) || loading;
+  document.getElementById("followSendBtn").disabled = (!document.getElementById("followInput").value.trim() && !pendingAttachment) || loading;
 }
 
 function autoGrow(el){
@@ -2123,6 +2186,77 @@ function renderStudyList(){
 }
 
 renderStudentSuggestions();
+
+/* ==================== DOCUMENT ATTACH + SEARCH TOGGLE ==================== */
+
+function fileToBase64(file){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(",")[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function handleFileAttach(file){
+  const maxSize = 3 * 1024 * 1024; // 3MB raw — stays safely under Vercel's 4.5MB request body cap once base64-encoded
+  if(file.size > maxSize){
+    alert("That file is too large — please use something under 3MB.");
+    return;
+  }
+  try{
+    if(file.type === "text/plain"){
+      const text = await file.text();
+      pendingAttachment = { name: file.name, kind: "text", text };
+    } else if(file.type === "application/pdf" || file.type.startsWith("image/")){
+      const base64 = await fileToBase64(file);
+      pendingAttachment = { name: file.name, kind: "inline", mimeType: file.type, data: base64 };
+    } else {
+      alert("Unsupported file type. Please upload a PDF, an image (PNG/JPG/WEBP), or a plain text file.");
+      return;
+    }
+    renderAttachmentChip();
+    updateSendStates();
+  } catch(e){
+    alert("Couldn't read that file. Please try again.");
+  }
+}
+
+function clearAttachment(){
+  pendingAttachment = null;
+  renderAttachmentChip();
+}
+
+function renderAttachmentChip(){
+  const html = pendingAttachment ? `
+    <div class="attach-chip">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <span>${escapeHtml(pendingAttachment.name)}</span>
+      <button class="attach-chip-remove" title="Remove"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>` : "";
+  document.getElementById("homeAttachChip").innerHTML = html;
+  document.getElementById("followAttachChip").innerHTML = html;
+  document.querySelectorAll(".attach-chip-remove").forEach(btn => {
+    btn.addEventListener("click", () => { clearAttachment(); updateSendStates(); });
+  });
+}
+
+const fileInput = document.getElementById("fileInput");
+document.getElementById("homeAttachBtn").addEventListener("click", () => fileInput.click());
+document.getElementById("followAttachBtn").addEventListener("click", () => fileInput.click());
+fileInput.addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  if(file) await handleFileAttach(file);
+  e.target.value = "";
+});
+
+function toggleSearch(){
+  searchEnabled = !searchEnabled;
+  document.getElementById("homeSearchBtn").classList.toggle("active", searchEnabled);
+  document.getElementById("followSearchBtn").classList.toggle("active", searchEnabled);
+}
+document.getElementById("homeSearchBtn").addEventListener("click", toggleSearch);
+document.getElementById("followSearchBtn").addEventListener("click", toggleSearch);
 
 renderSuggestions();
 loadThreads();
