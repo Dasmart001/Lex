@@ -38,6 +38,7 @@
   .sb-brand .mark{ font-family:'Libre Caslon Text',serif; font-style:italic; font-size:18px; }
   .sb-head-icons{ display:flex; gap:2px; }
   .icon-btn{ background:transparent; border:none; color:var(--ink); cursor:pointer; padding:7px; border-radius:6px; display:flex; }
+  .icon-btn.active{ background:var(--ink); color:var(--inv); }
   .icon-btn:hover{ background:var(--hover); }
 
   .sb-primary{ padding:2px 10px 10px 10px; display:flex; flex-direction:column; gap:1px; }
@@ -410,6 +411,16 @@
   .think-block.open .think-body{ display:block; }
   .think-body p{ margin:0 0 10px 0; }
   .think-body p:last-child{ margin-bottom:0; }
+  .think-block.think-live .think-toggle{ color:var(--ink); cursor:default; }
+  .think-block.think-live .think-toggle svg{ display:none; }
+  .think-live-dot{
+    width:6px; height:6px; border-radius:50%; background:var(--ink); display:inline-block;
+    margin-right:5px; animation: think-pulse 1.1s ease-in-out infinite;
+  }
+  @keyframes think-pulse{ 0%,100%{ opacity:.2; } 50%{ opacity:1; } }
+  .think-block.think-live .think-body{ display:block; max-height:170px; overflow-y:auto; scroll-behavior:smooth; }
+  .think-placeholder{ color:var(--faint); font-style:italic; }
+  .live-cursor{ display:inline-block; width:2px; height:15px; background:var(--ink); margin-left:2px; vertical-align:text-bottom; animation:think-pulse .9s ease-in-out infinite; }
   .thinking-label{ font-family:'Space Mono',monospace; font-size:11px; color:var(--faint); letter-spacing:.03em; }
   @keyframes spin{ to{ transform:rotate(360deg); } }
 
@@ -619,6 +630,9 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
       <div class="thread-title" id="threadTitle"></div>
+      <button class="icon-btn" id="topNewBtn" title="New">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
       <button class="icon-btn" id="voiceModeBtn" title="Voice conversation">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
       </button>
@@ -801,6 +815,13 @@
         </div>
       </div>
       <div class="draft-page-wrap" id="draftPageWrap">
+        <div class="think-block" id="draftThinkBlock" style="display:none;">
+          <button class="think-toggle" id="draftThinkToggle">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+            <span id="draftThinkLabel">Thought process</span>
+          </button>
+          <div class="think-body" id="draftThinkBody"></div>
+        </div>
         <div class="draft-page" id="draftPage"></div>
         <textarea class="draft-page-edit" id="draftPageEdit" style="display:none;"></textarea>
       </div>
@@ -822,7 +843,6 @@
             </div>
           </div>
         </div>
-        <div class="persist-disclaimer">Review every clause before use. Lex can make mistakes.</div>
       </div>
     </div>
 
@@ -1057,6 +1077,34 @@ function deleteThread(id){
 
 function activeThread(){ return threads.find(t => t.id === activeId); }
 
+// Robust clipboard copy: tries the modern async Clipboard API first, and
+// falls back to a hidden textarea + execCommand for contexts where
+// clipboard-write isn't permitted (sandboxed iframes, non-secure origins,
+// older WebViews). Returns a promise resolving true/false on success.
+function copyToClipboard(text){
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    return navigator.clipboard.writeText(text).then(() => true).catch(() => fallbackCopy(text));
+  }
+  return Promise.resolve(fallbackCopy(text));
+}
+function fallbackCopy(text){
+  try{
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.top = "-1000px";
+    ta.style.left = "-1000px";
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    const ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    return ok;
+  } catch(e){
+    return false;
+  }
+}
+
 function escapeHtml(str){
   return str.replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 }
@@ -1214,19 +1262,19 @@ function renderThreadInner(){
       let inner = `<div class="assistant-label"><svg width="13" height="13" viewBox="0 0 36 36" fill="currentColor" class="assistant-mark"><g transform="rotate(-38 18 15)"><rect x="9" y="4" width="17" height="8" rx="2.6"/><rect x="14.7" y="12" width="5.6" height="17" rx="2.6"/></g><rect x="5" y="29.5" width="15" height="4.2" rx="2.1"/></svg><span class="assistant-name">LexAI</span></div>`;
       if(m.thinking){
         inner += `
-          <div class="think-block" data-index="${i}">
+          <div class="think-block${m.streaming ? ' open think-live' : ''}" data-index="${i}">
             <button class="think-toggle">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-              Thought process
+              ${m.streaming ? '<span class="think-live-dot"></span>Thinking…' : 'Thought process'}
             </button>
             <div class="think-body">${formatAnswer(m.thinking)}</div>
           </div>`;
       }
-      inner += `<div class="answer${m.isError ? ' error' : ''}" data-index="${i}">${formatAnswer(m.content)}</div>`;
+      inner += `<div class="answer${m.isError ? ' error' : ''}" data-index="${i}">${formatAnswer(m.content)}${m.streaming && m.content ? '<span class="live-cursor"></span>' : ''}</div>`;
       if(Array.isArray(m.sources) && m.sources.length > 0){
         inner += `<div class="sources-row">${m.sources.map((s,si) => `<a href="${escapeHtml(s.uri)}" target="_blank" rel="noopener" class="source-chip">${si+1}. ${escapeHtml(s.title)}</a>`).join("")}</div>`;
       }
-      if(!m.isError){
+      if(!m.isError && !m.streaming){
         inner += `
           <div class="msg-actions" data-index="${i}">
             <button class="act-copy" title="Copy"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
@@ -1245,10 +1293,12 @@ function renderThreadInner(){
   wireLongPress();
   document.querySelectorAll(".think-toggle").forEach(btn => {
     btn.addEventListener("click", () => {
+      if(btn.parentElement.classList.contains("think-live")) return;
       btn.parentElement.classList.toggle("open");
     });
   });
-  if(loading){
+  const lastMsg = t.messages[t.messages.length - 1];
+  if(loading && !(lastMsg && lastMsg.role === "assistant" && lastMsg.streaming)){
     const row = document.createElement("div");
     row.className = "thinking-row";
     row.innerHTML = `<div class="gavel-loader"><svg viewBox="0 0 36 36" fill="currentColor"><g transform="rotate(-32 18 15)"><rect x="9" y="4" width="17" height="8" rx="2.6"/><rect x="14.7" y="12" width="5.6" height="17" rx="2.6"/></g><rect x="5" y="29.5" width="15" height="4.2" rx="2.1"/></svg></div><div class="thinking-label">Reasoning…</div>`;
@@ -1285,6 +1335,71 @@ async function callClaude(threadMessages, systemPrompt, useSearch){
   };
 }
 
+// Streaming variant — used where watching Lex's reasoning arrive live adds
+// real value (drafting). Calls onThought(chunk) as reasoning tokens arrive
+// and onText(chunk) as answer tokens arrive, then resolves with the full
+// { text, thinking, sources } once the stream closes.
+async function callClaudeStream(threadMessages, systemPrompt, useSearch, onThought, onText){
+  const payload = threadMessages.map(m => ({
+    role: m.role,
+    content: m.content,
+    ...(m.attachment ? { attachment: m.attachment } : {}),
+  }));
+  const response = await fetch("/api/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      system: systemPrompt || SYSTEM_PROMPT,
+      messages: payload,
+      useSearch: !!useSearch,
+      stream: true,
+    }),
+  });
+
+  if(!response.ok || !response.body){
+    throw new Error("Lex couldn't reach the AI service.");
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let thinking = "";
+  let text = "";
+  let sources = [];
+  let streamError = "";
+
+  while(true){
+    const { done, value } = await reader.read();
+    if(done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop();
+    for(const line of lines){
+      if(!line.startsWith("data: ")) continue;
+      const jsonStr = line.slice(6).trim();
+      if(!jsonStr) continue;
+      let evt;
+      try{ evt = JSON.parse(jsonStr); } catch { continue; }
+      if(evt.type === "thought"){
+        thinking += evt.text;
+        onThought?.(evt.text, thinking);
+      } else if(evt.type === "text"){
+        text += evt.text;
+        onText?.(evt.text, text);
+      } else if(evt.type === "done"){
+        sources = Array.isArray(evt.sources) ? evt.sources : [];
+      } else if(evt.type === "error"){
+        streamError = evt.error || "Something went wrong.";
+      }
+    }
+  }
+
+  if(!text && streamError){
+    throw new Error(streamError);
+  }
+  return { text, thinking, sources };
+}
+
 function buildUserMessage(typedText){
   const content = typedText.trim();
   if(!pendingAttachment) return { role: "user", content, displayContent: content };
@@ -1299,6 +1414,59 @@ function buildUserMessage(typedText){
     attachment: { mimeType: pendingAttachment.mimeType, data: pendingAttachment.data },
     attachmentName: pendingAttachment.name,
   };
+}
+
+// Lightweight patch used while a research answer is streaming in — avoids
+// rebuilding the whole thread (and re-wiring every button, and re-saving to
+// localStorage) on every single token. Falls back to a full render for the
+// very first chunk, when the row doesn't exist in the DOM yet.
+function updateStreamingMessageDOM(idx, m){
+  const wrap = document.getElementById("threadInner");
+  const answerEl = wrap.querySelector(`.answer[data-index="${idx}"]`);
+  if(!answerEl){
+    renderThreadInner();
+    return;
+  }
+  const row = answerEl.closest(".msg-row");
+  let thinkBlock = row.querySelector(".think-block");
+  if(m.thinking){
+    if(!thinkBlock){
+      thinkBlock = document.createElement("div");
+      thinkBlock.className = "think-block open think-live";
+      thinkBlock.dataset.index = idx;
+      thinkBlock.innerHTML = `<button class="think-toggle"><span class="think-live-dot"></span>Thinking…</button><div class="think-body"></div>`;
+      row.insertBefore(thinkBlock, answerEl);
+    }
+    thinkBlock.querySelector(".think-body").innerHTML = formatAnswer(m.thinking);
+    const body = thinkBlock.querySelector(".think-body");
+    body.scrollTop = body.scrollHeight;
+  }
+  answerEl.innerHTML = formatAnswer(m.content) + (m.content ? '<span class="live-cursor"></span>' : '');
+  document.getElementById("threadView").scrollTop = document.getElementById("threadView").scrollHeight;
+}
+
+async function runResearchStream(t, usedSearch){
+  const placeholder = { role: "assistant", content: "", thinking: "", sources: [], streaming: true };
+  const contextMessages = t.messages.slice(); // everything sent so far, excluding the placeholder
+  t.messages.push(placeholder);
+  const idx = t.messages.length - 1;
+  renderThreadInner();
+
+  try{
+    const reply = await callClaudeStream(contextMessages, undefined, usedSearch,
+      (chunk, full) => { placeholder.thinking = full; updateStreamingMessageDOM(idx, placeholder); },
+      (chunk, full) => { placeholder.content = full; updateStreamingMessageDOM(idx, placeholder); }
+    );
+    placeholder.content = reply.text;
+    placeholder.thinking = reply.thinking;
+    placeholder.sources = reply.sources;
+    delete placeholder.streaming;
+  } catch(e){
+    t.messages[idx] = { role: "assistant", content: "Something went wrong reaching the AI service. Please try again in a moment.", isError: true };
+  } finally {
+    loading = false;
+    renderThreadInner();
+  }
 }
 
 async function startResearch(text){
@@ -1318,15 +1486,7 @@ async function startResearch(text){
   document.getElementById("followInput").value = "";
   updateSendStates();
 
-  try{
-    const reply = await callClaude(t.messages, undefined, usedSearch);
-    t.messages.push({ role: "assistant", content: reply.text, thinking: reply.thinking, sources: reply.sources });
-  } catch(e){
-    t.messages.push({ role: "assistant", content: "Something went wrong reaching the AI service. Please try again in a moment.", isError: true });
-  } finally {
-    loading = false;
-    renderThreadInner();
-  }
+  await runResearchStream(t, usedSearch);
 }
 
 function activeChatSession(){
@@ -1369,9 +1529,12 @@ function wireMessageActions(){
 
     const copyBtn = bar.querySelector(".act-copy");
     copyBtn.addEventListener("click", () => {
-      navigator.clipboard?.writeText(msg.content).catch(() => {});
-      copyBtn.classList.add("active");
-      setTimeout(() => copyBtn.classList.remove("active"), 900);
+      copyToClipboard(msg.content).then(ok => {
+        if(ok){
+          copyBtn.classList.add("active");
+          setTimeout(() => copyBtn.classList.remove("active"), 900);
+        }
+      });
     });
 
     const readBtn = bar.querySelector(".act-read");
@@ -1434,9 +1597,12 @@ function wireUserActions(){
 
     const copyBtn = bar.querySelector(".uact-copy");
     copyBtn.addEventListener("click", () => {
-      navigator.clipboard?.writeText(msg.displayContent !== undefined ? msg.displayContent : msg.content).catch(() => {});
-      copyBtn.classList.add("active");
-      setTimeout(() => copyBtn.classList.remove("active"), 900);
+      copyToClipboard(msg.displayContent !== undefined ? msg.displayContent : msg.content).then(ok => {
+        if(ok){
+          copyBtn.classList.add("active");
+          setTimeout(() => copyBtn.classList.remove("active"), 900);
+        }
+      });
     });
 
     bar.querySelector(".uact-edit").addEventListener("click", () => {
@@ -1522,7 +1688,7 @@ document.getElementById("ctxCopy").addEventListener("click", () => {
   const s = activeChatSession();
   if(s && ctxTargetIndex !== null){
     const m = s.messages[ctxTargetIndex];
-    navigator.clipboard?.writeText(m.displayContent !== undefined ? m.displayContent : m.content).catch(() => {});
+    copyToClipboard(m.displayContent !== undefined ? m.displayContent : m.content);
   }
   closeCtxMenu();
 });
@@ -1539,10 +1705,36 @@ document.getElementById("ctxSelect").addEventListener("click", () => {
       const sel = window.getSelection();
       sel.removeAllRanges();
       sel.addRange(range);
+      armSelectionDismiss();
     }
   }
   closeCtxMenu();
 });
+
+// Tapping anywhere else after "Select text" clears the selection —
+// matches how text selection normally gets dismissed on mobile.
+let selectionDismissArmed = false;
+function armSelectionDismiss(){
+  if(selectionDismissArmed) return;
+  selectionDismissArmed = true;
+  const clear = (e) => {
+    // Ignore the very tap that produced the selection, and don't clear
+    // if the person is still actively selecting/dragging a handle.
+    const sel = window.getSelection();
+    if(sel && !sel.isCollapsed){
+      sel.removeAllRanges();
+    }
+    selectionDismissArmed = false;
+    document.removeEventListener("touchstart", clear, true);
+    document.removeEventListener("mousedown", clear, true);
+  };
+  // Defer binding by a tick so the click that triggered selection doesn't
+  // immediately re-trigger this same listener.
+  setTimeout(() => {
+    document.addEventListener("touchstart", clear, true);
+    document.addEventListener("mousedown", clear, true);
+  }, 50);
+}
 
 document.getElementById("ctxEdit").addEventListener("click", () => {
   if(ctxTargetRole !== "user") { closeCtxMenu(); return; }
@@ -1576,15 +1768,7 @@ async function followUp(text){
   document.getElementById("followInput").value = "";
   updateSendStates();
 
-  try{
-    const reply = await callClaude(t.messages, undefined, usedSearch);
-    t.messages.push({ role: "assistant", content: reply.text, thinking: reply.thinking, sources: reply.sources });
-  } catch(e){
-    t.messages.push({ role: "assistant", content: "Something went wrong reaching the AI service. Please try again in a moment.", isError: true });
-  } finally {
-    loading = false;
-    renderThreadInner();
-  }
+  await runResearchStream(t, usedSearch);
 }
 
 function updateSendStates(){
@@ -1609,9 +1793,18 @@ followInput.addEventListener("keydown", e => { if(e.key === "Enter" && !e.shiftK
 document.getElementById("homeSendBtn").addEventListener("click", () => startResearch(homeInput.value));
 document.getElementById("followSendBtn").addEventListener("click", () => followUp(followInput.value));
 document.getElementById("newChatBtn").addEventListener("click", () => {
-  if(currentMode === "research"){ showHome(); }
-  else if(currentMode === "drafting"){ showDraftHome(); }
-  else { showStudentHome(); }
+  switchMode("research");
+});
+
+document.getElementById("topNewBtn").addEventListener("click", () => {
+  if(currentMode === "research"){
+    showHome();
+  } else if(currentMode === "drafting"){
+    showDraftHome();
+  } else {
+    showStudentHome();
+    openStudyCreate();
+  }
   closeSidebarMobile();
 });
 
@@ -1960,6 +2153,8 @@ function showDraftView(){
   renderDraftList();
 }
 
+let draftStreaming = false;
+
 function renderDraftView(){
   const d = activeDraft();
   if(!d) return;
@@ -1969,11 +2164,17 @@ function renderDraftView(){
   const prevBtn = document.getElementById("draftVerPrev");
   const nextBtn = document.getElementById("draftVerNext");
   const notesEl = document.getElementById("draftNotes");
+  const thinkBlock = document.getElementById("draftThinkBlock");
 
   page.style.display = draftEditing ? "none" : "block";
   editEl.style.display = draftEditing ? "block" : "none";
 
+  // While actively streaming, startDraftThinkLive()/updateDraftThinkLive()/
+  // updateDraftLiveText() are driving the DOM directly — leave it alone here.
+  if(draftStreaming) return;
+
   if(loading && d.versions.length === 0){
+    thinkBlock.style.display = "none";
     page.innerHTML = `<div class="thinking-row"><div class="gavel-loader"><svg viewBox="0 0 36 36" fill="currentColor"><g transform="rotate(-32 18 15)"><rect x="9" y="4" width="17" height="8" rx="2.6"/><rect x="14.7" y="12" width="5.6" height="17" rx="2.6"/></g><rect x="5" y="29.5" width="15" height="4.2" rx="2.1"/></svg></div><div class="thinking-label">Drafting…</div></div>`;
     verLabel.textContent = "";
     prevBtn.disabled = true;
@@ -1989,12 +2190,62 @@ function renderDraftView(){
   prevBtn.disabled = d.currentVersionIdx <= 0;
   nextBtn.disabled = d.currentVersionIdx >= d.versions.length - 1;
 
+  // Show the AI's actual reasoning for the *current* version, collapsed by
+  // default — tap to expand and read the whole thing.
+  if(d.thinking && d.currentVersionIdx === d.versions.length - 1){
+    thinkBlock.style.display = "block";
+    thinkBlock.classList.remove("think-live", "open");
+    document.getElementById("draftThinkLabel").textContent = "Thought process";
+    document.getElementById("draftThinkBody").innerHTML = formatAnswer(d.thinking);
+  } else {
+    thinkBlock.style.display = "none";
+  }
+
   if(d.notes){
     notesEl.style.display = "block";
     notesEl.innerHTML = `<strong>Notes:</strong> ${escapeHtml(d.notes)}`;
   } else {
     notesEl.style.display = "none";
   }
+}
+
+document.getElementById("draftThinkToggle").addEventListener("click", () => {
+  const block = document.getElementById("draftThinkBlock");
+  if(block.classList.contains("think-live")) return; // no manual toggle mid-stream, it's already open
+  block.classList.toggle("open");
+});
+
+function startDraftThinkLive(){
+  document.getElementById("draftPage").style.display = "block";
+  document.getElementById("draftPageEdit").style.display = "none";
+  document.getElementById("draftVerLabel").textContent = "Drafting…";
+  document.getElementById("draftVerPrev").disabled = true;
+  document.getElementById("draftVerNext").disabled = true;
+  document.getElementById("draftNotes").style.display = "none";
+  document.getElementById("draftPage").innerHTML = "";
+  const block = document.getElementById("draftThinkBlock");
+  block.style.display = "block";
+  block.classList.add("open", "think-live");
+  document.getElementById("draftThinkLabel").innerHTML = `<span class="think-live-dot"></span>Thinking…`;
+  document.getElementById("draftThinkBody").innerHTML = `<span class="think-placeholder">Working out how to structure this…</span>`;
+}
+
+function updateDraftThinkLive(fullThinking){
+  const body = document.getElementById("draftThinkBody");
+  body.innerHTML = formatAnswer(fullThinking) || `<span class="think-placeholder">Working out how to structure this…</span>`;
+  body.scrollTop = body.scrollHeight;
+}
+
+function updateDraftLiveText(fullText){
+  // Once the actual document starts arriving, collapse the thinking panel
+  // down to a small closed toggle and start building the draft live.
+  const block = document.getElementById("draftThinkBlock");
+  if(block.classList.contains("think-live")){
+    block.classList.remove("think-live", "open");
+    document.getElementById("draftThinkLabel").textContent = "Thought process";
+  }
+  const visible = fullText.split("---NOTES---")[0];
+  document.getElementById("draftPage").innerHTML = formatAnswer(visible) + `<span class="live-cursor"></span>`;
 }
 
 async function generateDraft(){
@@ -2007,19 +2258,25 @@ async function generateDraft(){
   clearAttachment();
   showDraftView();
   loading = true;
-  renderDraftView();
+  draftStreaming = true;
+  startDraftThinkLive();
 
   try{
-    const reply = await callClaude([msg], DRAFTING_SYSTEM_PROMPT, usedResearch);
+    const reply = await callClaudeStream([msg], DRAFTING_SYSTEM_PROMPT, usedResearch,
+      (chunk, full) => updateDraftThinkLive(full),
+      (chunk, full) => updateDraftLiveText(full)
+    );
     const { doc, notes } = parseDraftResponse(reply.text);
     d.versions.push({ content: doc, createdAt: Date.now() });
     d.currentVersionIdx = 0;
     d.notes = notes;
+    d.thinking = reply.thinking;
   } catch(e){
     d.versions.push({ content: "Something went wrong generating this draft. Please try again.", createdAt: Date.now() });
     d.currentVersionIdx = 0;
   } finally {
     loading = false;
+    draftStreaming = false;
     renderDraftView();
     renderDraftList();
     saveThreads();
@@ -2102,7 +2359,13 @@ document.getElementById("draftEditBtn").addEventListener("click", () => {
 document.getElementById("draftCopyBtn").addEventListener("click", () => {
   const d = activeDraft();
   if(!d || !d.versions[d.currentVersionIdx]) return;
-  navigator.clipboard?.writeText(d.versions[d.currentVersionIdx].content).catch(() => {});
+  const btn = document.getElementById("draftCopyBtn");
+  copyToClipboard(d.versions[d.currentVersionIdx].content).then(ok => {
+    if(ok){
+      btn.classList.add("active");
+      setTimeout(() => btn.classList.remove("active"), 900);
+    }
+  });
 });
 
 document.getElementById("draftDownloadBtn").addEventListener("click", () => {
@@ -2127,7 +2390,7 @@ function switchMode(mode){
   document.getElementById("threadList").style.display = mode === "research" ? "block" : "none";
   document.getElementById("draftList").style.display = mode === "drafting" ? "block" : "none";
   document.getElementById("studentList").style.display = mode === "student" ? "block" : "none";
-  document.getElementById("newChatLabel").textContent = mode === "research" ? "New chat" : mode === "drafting" ? "New draft" : "New session";
+  document.getElementById("newChatLabel").textContent = "New chat";
 
   // Hide every top-level screen from every mode first, then show only
   // what the target mode needs — avoids stale screens leaking through.
