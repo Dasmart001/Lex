@@ -172,7 +172,52 @@
   .chip.pick svg{ color:var(--faint); }
   .persist-disclaimer{ text-align:center; font-size:11px; color:var(--faint); margin-top:16px; }
 
-  /* ---- drafting mode ---- */
+  /* ---- drafting mode: setup wizard ---- */
+  .draft-wizard{ flex:1; overflow-y:auto; display:flex; flex-direction:column; align-items:center; padding:6vh 20px 40px 20px; }
+  .wizard-inner{ width:100%; max-width:560px; display:flex; flex-direction:column; gap:26px; }
+
+  .wizard-steps{ display:flex; align-items:center; justify-content:center; gap:8px; }
+  .wizard-step{ display:flex; align-items:center; gap:7px; font-family:'Space Mono',monospace; font-size:11px; color:var(--faint); transition:color .15s; }
+  .wizard-step-num{ width:20px; height:20px; border-radius:50%; border:1.5px solid var(--line); display:flex; align-items:center; justify-content:center; font-size:10px; color:var(--faint); flex-shrink:0; transition:background .15s,border-color .15s,color .15s; }
+  .wizard-step.active{ color:var(--ink); }
+  .wizard-step.active .wizard-step-num{ background:var(--ink); border-color:var(--ink); color:var(--inv); }
+  .wizard-step.done .wizard-step-num{ background:var(--ink); border-color:var(--ink); color:var(--inv); }
+  .wizard-step-line{ width:34px; height:1px; background:var(--line); }
+
+  .wizard-panel{ display:flex; flex-direction:column; gap:20px; }
+  .wizard-field{ display:flex; flex-direction:column; gap:8px; }
+  .wizard-field label{ font-size:12px; font-weight:600; color:var(--dim); }
+  .wizard-input, .wizard-textarea{
+    border:1.5px solid var(--line); border-radius:10px; padding:11px 13px; font-family:'Public Sans',sans-serif;
+    font-size:14px; color:var(--ink); background:var(--bg); width:100%;
+  }
+  .wizard-input:focus, .wizard-textarea:focus{ outline:none; border-color:var(--ink); }
+  .wizard-textarea{ resize:vertical; line-height:1.55; }
+  .wizard-row-2{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  @media(max-width:520px){ .wizard-row-2{ grid-template-columns:1fr; } }
+  .chip.selected{ background:var(--ink); color:var(--inv); border-color:var(--ink); }
+
+  .wizard-actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:2px; }
+  .wizard-secondary-btn{
+    background:transparent; border:1.5px solid var(--line); border-radius:24px; padding:10px 18px;
+    font-size:13.5px; font-weight:600; cursor:pointer; color:var(--ink); font-family:'Public Sans',sans-serif; transition:background .12s;
+  }
+  .wizard-secondary-btn:hover{ background:var(--hover); }
+  .wizard-primary-btn{
+    background:var(--ink); color:var(--inv); border:none; border-radius:24px; padding:10px 20px;
+    font-size:13.5px; font-weight:600; cursor:pointer; font-family:'Public Sans',sans-serif; transition:opacity .12s;
+  }
+  .wizard-primary-btn:hover{ opacity:.85; }
+  .wizard-primary-btn:disabled{ opacity:.4; cursor:default; }
+
+  .wizard-summary{ border:1px solid var(--line-soft); border-radius:12px; padding:14px 16px; background:var(--hover); font-size:12.5px; color:var(--dim); line-height:1.75; }
+  .wizard-summary b{ color:var(--ink); font-weight:600; }
+  .wizard-summary-empty{ color:var(--faint); font-style:italic; }
+  .wizard-toggle-row{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .wizard-toggle-row .t{ font-size:13.5px; }
+  .wizard-toggle-row .sub{ font-size:11px; color:var(--faint); margin-top:2px; }
+
+  /* ---- drafting mode: document view ---- */
   .draft-toolbar{ display:flex; align-items:center; justify-content:space-between; padding:12px 20px; border-bottom:1px solid var(--line-soft); flex-shrink:0; }
   .draft-version-nav{ display:flex; align-items:center; gap:6px; font-family:'Space Mono',monospace; font-size:11.5px; color:var(--dim); }
   .draft-toolbar-actions{ display:flex; align-items:center; gap:2px; }
@@ -195,22 +240,60 @@
   .draft-page-edit:focus{ outline:none; }
   .draft-notes{ padding:14px 20px; font-size:12.5px; color:var(--dim); background:var(--panel, var(--hover)); border-top:1px solid var(--line-soft); flex-shrink:0; }
 
-  /* ---- student mode ---- */
+  /* ---- student mode: library home ---- */
+  .library{ flex:1; overflow-y:auto; padding:6vh 20px 40px 20px; }
+  .library-inner{ max-width:720px; margin:0 auto; width:100%; }
+  .library-head{ display:flex; align-items:center; justify-content:space-between; gap:14px; margin-bottom:26px; flex-wrap:wrap; }
+  .library-head .home-greeting{ margin-bottom:0; justify-content:flex-start; }
+  .library-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:13px; }
+  .deck-card{
+    border:1.5px solid var(--line); border-radius:14px; padding:16px; cursor:pointer; display:flex; flex-direction:column;
+    gap:11px; transition:border-color .12s, background .12s; position:relative; background:var(--bg);
+  }
+  .deck-card:hover{ border-color:var(--ink); background:var(--hover); }
+  .deck-card-top{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .deck-type-badge{ font-family:'Space Mono',monospace; font-size:9.5px; color:var(--dim); border:1px solid var(--line); border-radius:4px; padding:2px 6px; text-transform:uppercase; letter-spacing:.03em; flex-shrink:0; }
+  .deck-card-title{ font-family:'Libre Caslon Text',serif; font-size:14.5px; line-height:1.4; }
+  .deck-card-meta{ font-size:11px; color:var(--faint); display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .deck-card-progress{ height:3px; border-radius:3px; background:var(--line); overflow:hidden; }
+  .deck-card-progress-fill{ height:100%; background:var(--ink); }
+  .deck-card-delete{
+    position:absolute; top:10px; right:10px; opacity:0; background:transparent; border:none; padding:5px; border-radius:6px;
+    color:var(--faint); cursor:pointer; transition:opacity .12s, background .12s, color .12s; display:flex;
+  }
+  .deck-card:hover .deck-card-delete{ opacity:1; }
+  .deck-card-delete:hover{ background:var(--line); color:var(--ink); }
+  .library-empty{ text-align:center; color:var(--faint); font-size:13.5px; padding:44px 20px; border:1.5px dashed var(--line); border-radius:14px; line-height:1.6; }
+
+  /* ---- student mode: study session ---- */
   .study-view{ flex:1; display:flex; flex-direction:column; align-items:center; padding:20px 20px 30px 20px; overflow-y:auto; }
   .study-progress{
     width:100%; max-width:520px; display:flex; justify-content:space-between; font-family:'Space Mono',monospace;
-    font-size:11px; color:var(--faint); margin-bottom:24px;
+    font-size:11px; color:var(--faint); margin-bottom:10px;
   }
+  .progress-track{ width:100%; max-width:520px; height:4px; background:var(--line); border-radius:4px; margin-bottom:26px; overflow:hidden; flex-shrink:0; }
+  .progress-fill{ height:100%; width:0%; background:var(--ink); border-radius:4px; transition:width .3s ease; }
   .study-stage{ width:100%; max-width:520px; display:flex; flex-direction:column; align-items:center; flex:1; justify-content:center; }
 
+  .flashcard-drag{ width:100%; perspective:1400px; cursor:grab; touch-action:pan-y; user-select:none; }
+  .flashcard-drag.dragging{ cursor:grabbing; }
+  .flashcard-drag.swipe-right .flashcard-face{ border-color:#2e7d5b; box-shadow:0 0 0 2px rgba(46,125,91,0.15); }
+  .flashcard-drag.swipe-left .flashcard-face{ border-color:var(--error,#b3483a); box-shadow:0 0 0 2px rgba(179,72,58,0.15); }
+
   .flashcard{
-    width:100%; min-height:220px; border:1.5px solid var(--ink); border-radius:14px; cursor:pointer;
-    display:flex; align-items:center; justify-content:center; padding:32px; text-align:center;
+    position:relative; width:100%; min-height:230px; transform-style:preserve-3d;
+    transition:transform .5s cubic-bezier(.22,1,.36,1);
   }
-  .flashcard-face{ font-size:17px; line-height:1.6; }
+  .flashcard.flipped{ transform:rotateY(180deg); }
+  .flashcard-face{
+    position:absolute; inset:0; backface-visibility:hidden; -webkit-backface-visibility:hidden;
+    border:1.5px solid var(--ink); border-radius:16px; display:flex; align-items:center; justify-content:center;
+    padding:32px; text-align:center; background:var(--bg); transition:border-color .15s, box-shadow .15s;
+    font-size:17px; line-height:1.6;
+  }
   .flashcard-front{ font-family:'Libre Caslon Text',serif; }
-  .flashcard-back{ color:var(--dim); }
-  .flashcard-hint{ font-size:11.5px; color:var(--faint); margin-top:14px; }
+  .flashcard-back{ color:var(--dim); font-size:15px; transform:rotateY(180deg); }
+  .flashcard-hint{ font-size:11.5px; color:var(--faint); margin-top:16px; }
 
   .study-controls{ width:100%; max-width:520px; display:flex; gap:10px; margin-top:24px; }
   .study-btn{
@@ -621,8 +704,8 @@
     </div>
 
     <!-- DRAFTING HOME -->
-    <div class="home" id="draftHome" style="display:none;">
-      <div class="home-inner">
+    <div class="draft-wizard" id="draftHome" style="display:none;">
+      <div class="wizard-inner">
         <div class="home-greeting">
           <svg width="26" height="26" viewBox="0 0 36 36" fill="currentColor" class="home-mark-icon">
             <g transform="rotate(-38 18 15)">
@@ -634,25 +717,62 @@
           <span class="home-title serif" id="draftGreeting">What are we drafting today?</span>
         </div>
 
-        <div class="composer" id="draftComposer">
-          <div class="composer-row">
-            <textarea id="draftInput" rows="1" placeholder="Describe the document you need — parties, key terms, anything specific…"></textarea>
+        <div class="wizard-steps">
+          <div class="wizard-step" id="wizStepInd1" data-step="1"><span class="wizard-step-num">1</span><span>Setup</span></div>
+          <div class="wizard-step-line"></div>
+          <div class="wizard-step" id="wizStepInd2" data-step="2"><span class="wizard-step-num">2</span><span>Context</span></div>
+        </div>
+
+        <!-- STEP 1 — SETUP -->
+        <div class="wizard-panel" id="wizardStep1">
+          <div class="wizard-field">
+            <label>What is this document about?</label>
+            <input type="text" id="draftTypeCustom" class="wizard-input" placeholder="e.g. Non-disclosure agreement, affidavit of loss, tenancy agreement…">
           </div>
-          <div class="composer-foot">
-            <button class="plus-btn" title="Attach reference">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            </button>
-            <span class="model-pill">Lex 1.0</span>
-            <div class="composer-actions">
-              <button class="send-btn" id="draftSendBtn" disabled>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
-              </button>
+          <div class="wizard-row-2">
+            <div class="wizard-field">
+              <label>Parties involved</label>
+              <input type="text" id="draftParties" class="wizard-input" placeholder="e.g. Acme Nigeria Ltd and John Doe">
             </div>
+            <div class="wizard-field">
+              <label>Jurisdiction</label>
+              <input type="text" id="draftJurisdiction" class="wizard-input" placeholder="e.g. Lagos State, Nigeria">
+            </div>
+          </div>
+          <div class="wizard-field">
+            <label>Key terms &amp; details</label>
+            <textarea id="draftDetails" class="wizard-textarea" rows="4" placeholder="Amounts, dates, clauses, or anything specific this document needs to cover…"></textarea>
+          </div>
+          <div class="wizard-actions">
+            <button class="wizard-primary-btn" id="wizardToStep2" disabled>Continue to context →</button>
           </div>
         </div>
 
-        <div class="chip-row" id="draftSuggestionGrid"></div>
-        <div class="persist-disclaimer">Every draft has bracketed placeholders to fill in and needs review before use — Lex is a starting point, not a substitute for legal judgment.</div>
+        <!-- STEP 2 — CONTEXT -->
+        <div class="wizard-panel" id="wizardStep2" style="display:none;">
+          <div class="wizard-summary" id="wizardSummary"></div>
+
+          <div class="wizard-field">
+            <label>Reference document (optional)</label>
+            <div class="attach-chip-row" id="draftAttachChip"></div>
+            <button class="wizard-secondary-btn" id="draftAttachBtn" style="align-self:flex-start;">Attach a file</button>
+          </div>
+
+          <div class="wizard-field">
+            <div class="wizard-toggle-row">
+              <div><div class="t">Ground in current legal research</div><div class="sub">Search for relevant, up-to-date statutes and case law while drafting</div></div>
+              <button class="search-toggle-btn" id="draftSearchToggle" title="Toggle research">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="wizard-actions" style="justify-content:space-between;">
+            <button class="wizard-secondary-btn" id="wizardBackTo1">← Back</button>
+            <button class="wizard-primary-btn" id="draftSendBtn" disabled>Generate draft</button>
+          </div>
+          <div class="persist-disclaimer">Every draft has bracketed placeholders to fill in and needs review before use — Lex is a starting point, not a substitute for legal judgment.</div>
+        </div>
       </div>
     </div>
 
@@ -707,40 +827,81 @@
     </div>
 
     <!-- STUDENT HOME -->
-    <div class="home" id="studentHome" style="display:none;">
-      <div class="home-inner">
-        <div class="home-greeting">
-          <svg width="26" height="26" viewBox="0 0 36 36" fill="currentColor" class="home-mark-icon">
-            <g transform="rotate(-38 18 15)">
-              <rect x="9" y="4" width="17" height="8" rx="2.6"/>
-              <rect x="14.7" y="12" width="5.6" height="17" rx="2.6"/>
-            </g>
-            <rect x="5" y="29.5" width="15" height="4.2" rx="2.1"/>
-          </svg>
-          <span class="home-title serif">What are you studying?</span>
+    <div class="library" id="studentHome" style="display:none;">
+      <div class="library-inner">
+        <div class="library-head">
+          <div class="home-greeting">
+            <svg width="24" height="24" viewBox="0 0 36 36" fill="currentColor" class="home-mark-icon">
+              <g transform="rotate(-38 18 15)">
+                <rect x="9" y="4" width="17" height="8" rx="2.6"/>
+                <rect x="14.7" y="12" width="5.6" height="17" rx="2.6"/>
+              </g>
+              <rect x="5" y="29.5" width="15" height="4.2" rx="2.1"/>
+            </svg>
+            <span class="home-title serif" style="font-size:21px;">Study library</span>
+          </div>
+          <button class="wizard-primary-btn" id="newStudySetBtn">+ New study set</button>
         </div>
 
-        <div class="modepills" style="margin-bottom:22px;">
-          <div class="pill on" id="studyModeFlashcards">Flashcards</div>
-          <div class="pill" id="studyModeQuiz">Quiz</div>
-        </div>
+        <div class="library-grid" id="libraryGrid"></div>
+        <div class="library-empty" id="libraryEmpty" style="display:none;">No study sets yet — create flashcards or a quiz from any topic to get started.</div>
+      </div>
+    </div>
 
-        <div class="composer" id="studentComposer">
+    <!-- NEW STUDY SET SHEET -->
+    <div class="modal-backdrop" id="studyCreateBackdrop">
+      <div class="modal">
+        <div class="modal-handle"></div>
+        <div class="modal-head">
+          <span class="t">New study set</span>
+          <button class="icon-btn" id="studyCreateCloseBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+        <div class="modal-body" style="padding:14px 16px 18px 16px;">
+          <div class="modepills" style="margin-bottom:16px;">
+            <div class="pill on" id="studyModeFlashcards">Flashcards</div>
+            <div class="pill" id="studyModeQuiz">Quiz</div>
+            <div class="pill" id="studyModeTutor">Tutor</div>
+          </div>
+          <div class="composer" id="studentComposer">
+            <div class="composer-row">
+              <textarea id="studentInput" rows="1" placeholder="e.g. offer and acceptance in contract law"></textarea>
+            </div>
+            <div class="composer-foot">
+              <span class="model-pill">Lex 1.0</span>
+              <div class="composer-actions">
+                <button class="send-btn" id="studentSendBtn" disabled>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="persist-disclaimer" id="studyCreateDisclaimer">Practice material generated by Lex — not verified past exam questions. Useful for revision, not a substitute for your course materials.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TUTOR VIEW (Socratic step-by-step chat) -->
+    <div class="thread-view" id="tutorView" style="display:none;">
+      <div class="thread-inner" id="tutorInner"></div>
+    </div>
+    <div class="followup" id="tutorFollowup" style="display:none;">
+      <div class="followup-inner">
+        <div class="composer" id="tutorComposer">
           <div class="composer-row">
-            <textarea id="studentInput" rows="1" placeholder="e.g. offer and acceptance in contract law"></textarea>
+            <textarea id="tutorInput" rows="1" placeholder="Respond, ask a question, or say what you're stuck on…"></textarea>
           </div>
           <div class="composer-foot">
             <span class="model-pill">Lex 1.0</span>
             <div class="composer-actions">
-              <button class="send-btn" id="studentSendBtn" disabled>
+              <button class="send-btn" id="tutorSendBtn" disabled>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
               </button>
             </div>
           </div>
         </div>
-
-        <div class="chip-row" id="studentSuggestionGrid"></div>
-        <div class="persist-disclaimer">Practice material generated by Lex — not verified past exam questions. Useful for revision, not a substitute for your course materials.</div>
+        <div class="persist-disclaimer">Lex's Tutor guides with questions rather than direct answers — it's practice support, not a substitute for your course materials.</div>
       </div>
     </div>
 
@@ -750,12 +911,15 @@
         <span id="fcProgressLabel">Card 1 of 10</span>
         <span id="fcKnownLabel">0 known</span>
       </div>
+      <div class="progress-track"><div class="progress-fill" id="fcProgressFill"></div></div>
       <div class="study-stage">
-        <div class="flashcard" id="flashcard">
-          <div class="flashcard-face flashcard-front" id="fcFront"></div>
-          <div class="flashcard-face flashcard-back" id="fcBack" style="display:none;"></div>
+        <div class="flashcard-drag" id="flashcardDrag">
+          <div class="flashcard" id="flashcard">
+            <div class="flashcard-face flashcard-front" id="fcFront"></div>
+            <div class="flashcard-face flashcard-back" id="fcBack"></div>
+          </div>
         </div>
-        <div class="flashcard-hint" id="fcHint">Tap the card to flip</div>
+        <div class="flashcard-hint" id="fcHint">Tap to flip</div>
       </div>
       <div class="study-controls" id="fcControls" style="display:none;">
         <button class="study-btn study-btn-again" id="fcAgainBtn">Still learning</button>
@@ -769,6 +933,7 @@
         <span id="qzProgressLabel">Question 1 of 8</span>
         <span id="qzScoreLabel">Score: 0</span>
       </div>
+      <div class="progress-track"><div class="progress-fill" id="qzProgressFill"></div></div>
       <div class="study-stage">
         <div class="quiz-question" id="qzQuestion"></div>
         <div class="quiz-options" id="qzOptions"></div>
@@ -792,12 +957,19 @@
 <script>
 const SYSTEM_PROMPT = `You are LexAI, an AI legal research assistant built for lawyers and law students, with particular depth in Nigerian law (case law, statutes, the Constitution, court procedure) while remaining useful for general legal reasoning.
 
+Voice and reasoning:
+- Be thoughtful, precise, and calm. Give the direct answer first, then the brief reasoning behind it.
+- Think through complex legal questions step by step, breaking multi-part issues into logical components rather than jumping to a conclusion.
+- Be transparent about uncertainty — prefer accuracy and nuance over overconfident simplicity. If a question turns on unsettled or jurisdiction-specific law, say so.
+- Ask a concise clarifying question only when the request is genuinely ambiguous; otherwise proceed with the most reasonable reading.
+
 How you respond:
 - Be precise and structured. Use short paragraphs; use headings or bullet points only for genuinely multi-part answers (e.g. Facts, Issue, Holding, Ratio Decidendi when discussing a case).
 - When you reference case law, statutes, or sections, name them plainly (e.g. "Section 36 of the 1999 Constitution (as amended)") but be clear you are recalling this from general training knowledge, not a live, verified case database — you do not have real-time access to a case law corpus in this demo.
 - Distinguish clearly between settled legal principle and areas of genuine judicial disagreement.
 - Never fabricate a citation, case name, or section number. If you are not confident one exists, say so plainly rather than inventing one.
-- Keep tone professional, direct, and useful to a working lawyer — skip filler and disclaimers except where a real ambiguity or risk exists.
+- Keep tone warm, polished, and professional — direct and useful to a working lawyer, skipping filler and disclaimers except where a real ambiguity or risk exists.
+- Use examples where they clarify a rule or distinction, but avoid unnecessary verbosity — every sentence should earn its place.
 - End answers that touch on a live legal decision with a brief, plain note that this is research assistance, not a substitute for independent verification and professional judgment.`;
 
 const CATEGORIES = [
@@ -1050,7 +1222,7 @@ function renderThreadInner(){
             <div class="think-body">${formatAnswer(m.thinking)}</div>
           </div>`;
       }
-      inner += `<div class="answer${m.isError ? ' error' : ''}">${formatAnswer(m.content)}</div>`;
+      inner += `<div class="answer${m.isError ? ' error' : ''}" data-index="${i}">${formatAnswer(m.content)}</div>`;
       if(Array.isArray(m.sources) && m.sources.length > 0){
         inner += `<div class="sources-row">${m.sources.map((s,si) => `<a href="${escapeHtml(s.uri)}" target="_blank" rel="noopener" class="source-chip">${si+1}. ${escapeHtml(s.title)}</a>`).join("")}</div>`;
       }
@@ -1157,11 +1329,43 @@ async function startResearch(text){
   }
 }
 
-function wireMessageActions(){
+function activeChatSession(){
+  if(currentMode === "student"){
+    const deck = studyDecks.find(d => d.id === activeStudyId);
+    if(!deck || deck.type !== "tutor") return null;
+    return {
+      messages: deck.messages,
+      render: renderTutorInner,
+      inputId: "tutorInput",
+      updateSendState: updateTutorSendState,
+      regenerate: async (msgs) => {
+        const reply = await callClaude(msgs, TUTOR_SYSTEM_PROMPT);
+        return { role: "assistant", content: reply.text };
+      },
+      save: saveThreads
+    };
+  }
   const t = activeThread();
+  if(!t) return null;
+  return {
+    messages: t.messages,
+    render: renderThreadInner,
+    inputId: "followInput",
+    updateSendState: updateSendStates,
+    regenerate: async (msgs) => {
+      const reply = await callClaude(msgs);
+      return { role: "assistant", content: reply.text, thinking: reply.thinking, sources: reply.sources };
+    },
+    save: () => {}
+  };
+}
+
+function wireMessageActions(){
+  const s = activeChatSession();
+  if(!s) return;
   document.querySelectorAll(".msg-actions").forEach(bar => {
     const idx = parseInt(bar.dataset.index, 10);
-    const msg = t.messages[idx];
+    const msg = s.messages[idx];
 
     const copyBtn = bar.querySelector(".act-copy");
     copyBtn.addEventListener("click", () => {
@@ -1197,19 +1401,21 @@ function wireMessageActions(){
 
     bar.querySelector(".act-regen").addEventListener("click", async () => {
       if(loading) return;
+      const session = activeChatSession();
+      if(!session) return;
       // Drop this assistant message and everything after it, then re-ask
       // using the same conversation up to (and including) the prior user turn.
-      t.messages = t.messages.slice(0, idx);
+      session.messages.splice(idx);
       loading = true;
-      renderThreadInner();
+      session.render();
       try{
-        const reply = await callClaude(t.messages);
-        t.messages.push({ role: "assistant", content: reply.text, thinking: reply.thinking, sources: reply.sources });
+        session.messages.push(await session.regenerate(session.messages));
       } catch(e){
-        t.messages.push({ role: "assistant", content: "Something went wrong reaching the AI service. Please try again in a moment.", isError: true });
+        session.messages.push({ role: "assistant", content: "Something went wrong reaching the AI service. Please try again in a moment.", isError: true });
       } finally {
         loading = false;
-        renderThreadInner();
+        session.render();
+        session.save();
       }
     });
   });
@@ -1217,12 +1423,14 @@ function wireMessageActions(){
 
 let longPressTimer = null;
 let ctxTargetIndex = null;
+let ctxTargetRole = null;
 
 function wireUserActions(){
-  const t = activeThread();
+  const s = activeChatSession();
+  if(!s) return;
   document.querySelectorAll(".user-actions").forEach(bar => {
     const idx = parseInt(bar.dataset.index, 10);
-    const msg = t.messages[idx];
+    const msg = s.messages[idx];
 
     const copyBtn = bar.querySelector(".uact-copy");
     copyBtn.addEventListener("click", () => {
@@ -1233,42 +1441,44 @@ function wireUserActions(){
 
     bar.querySelector(".uact-edit").addEventListener("click", () => {
       const content = msg.displayContent !== undefined ? msg.displayContent : msg.content;
-      t.messages = t.messages.slice(0, idx);
-      renderThreadInner();
-      const input = document.getElementById("followInput");
+      s.messages.splice(idx);
+      s.render();
+      const input = document.getElementById(s.inputId);
       input.value = content;
       autoGrow(input);
-      updateSendStates();
+      s.updateSendState();
       input.focus();
     });
 
     bar.querySelector(".uact-retry").addEventListener("click", async () => {
       if(loading) return;
+      const session = activeChatSession();
+      if(!session) return;
       // Re-send the exact original message (including any attachment),
       // dropping it and everything after, then asking again as a fresh turn.
-      t.messages = t.messages.slice(0, idx);
-      t.messages.push({ ...msg });
+      session.messages.splice(idx);
+      session.messages.push({ ...msg });
       loading = true;
-      renderThreadInner();
+      session.render();
       try{
-        const reply = await callClaude(t.messages);
-        t.messages.push({ role: "assistant", content: reply.text, thinking: reply.thinking, sources: reply.sources });
+        session.messages.push(await session.regenerate(session.messages));
       } catch(e){
-        t.messages.push({ role: "assistant", content: "Something went wrong reaching the AI service. Please try again in a moment.", isError: true });
+        session.messages.push({ role: "assistant", content: "Something went wrong reaching the AI service. Please try again in a moment.", isError: true });
       } finally {
         loading = false;
-        renderThreadInner();
+        session.render();
+        session.save();
       }
     });
   });
 }
 
 function wireLongPress(){
-  document.querySelectorAll(".user-bubble").forEach(bubble => {
+  document.querySelectorAll(".user-bubble, .answer[data-index]").forEach(bubble => {
     const start = (e) => {
       longPressTimer = setTimeout(() => {
         const rect = bubble.getBoundingClientRect();
-        openCtxMenu(rect, parseInt(bubble.dataset.index, 10));
+        openCtxMenu(rect, parseInt(bubble.dataset.index, 10), bubble.classList.contains("answer") ? "assistant" : "user");
       }, 480);
     };
     const cancel = () => { clearTimeout(longPressTimer); };
@@ -1281,10 +1491,12 @@ function wireLongPress(){
   });
 }
 
-function openCtxMenu(rect, index){
+function openCtxMenu(rect, index, role){
   ctxTargetIndex = index;
+  ctxTargetRole = role || "user";
   const menu = document.getElementById("ctxMenu");
   const backdrop = document.getElementById("ctxBackdrop");
+  document.getElementById("ctxEdit").style.display = ctxTargetRole === "user" ? "flex" : "none";
   menu.style.display = "block";
   const menuWidth = 200;
   let left = Math.min(rect.right - menuWidth, window.innerWidth - menuWidth - 12);
@@ -1301,14 +1513,15 @@ function closeCtxMenu(){
   document.getElementById("ctxMenu").classList.remove("show");
   document.getElementById("ctxBackdrop").classList.remove("show");
   ctxTargetIndex = null;
+  ctxTargetRole = null;
 }
 
 document.getElementById("ctxBackdrop").addEventListener("click", closeCtxMenu);
 
 document.getElementById("ctxCopy").addEventListener("click", () => {
-  const t = activeThread();
-  if(t && ctxTargetIndex !== null){
-    const m = t.messages[ctxTargetIndex];
+  const s = activeChatSession();
+  if(s && ctxTargetIndex !== null){
+    const m = s.messages[ctxTargetIndex];
     navigator.clipboard?.writeText(m.displayContent !== undefined ? m.displayContent : m.content).catch(() => {});
   }
   closeCtxMenu();
@@ -1316,7 +1529,10 @@ document.getElementById("ctxCopy").addEventListener("click", () => {
 
 document.getElementById("ctxSelect").addEventListener("click", () => {
   if(ctxTargetIndex !== null){
-    const el = document.querySelector(`.user-bubble[data-index="${ctxTargetIndex}"]`);
+    const selector = ctxTargetRole === "assistant"
+      ? `.answer[data-index="${ctxTargetIndex}"]`
+      : `.user-bubble[data-index="${ctxTargetIndex}"]`;
+    const el = document.querySelector(selector);
     if(el){
       const range = document.createRange();
       range.selectNodeContents(el);
@@ -1329,16 +1545,17 @@ document.getElementById("ctxSelect").addEventListener("click", () => {
 });
 
 document.getElementById("ctxEdit").addEventListener("click", () => {
-  const t = activeThread();
-  if(t && ctxTargetIndex !== null){
-    const m = t.messages[ctxTargetIndex];
+  if(ctxTargetRole !== "user") { closeCtxMenu(); return; }
+  const s = activeChatSession();
+  if(s && ctxTargetIndex !== null){
+    const m = s.messages[ctxTargetIndex];
     const content = m.displayContent !== undefined ? m.displayContent : m.content;
-    t.messages = t.messages.slice(0, ctxTargetIndex);
-    renderThreadInner();
-    const input = document.getElementById("followInput");
+    s.messages.splice(ctxTargetIndex);
+    s.render();
+    const input = document.getElementById(s.inputId);
     input.value = content;
     autoGrow(input);
-    updateSendStates();
+    s.updateSendState();
     input.focus();
   }
   closeCtxMenu();
@@ -1605,26 +1822,80 @@ Rules:
 - Match the formality and structure expected of the document type requested.
 - Never fabricate case citations or statutory references within a document; if uncertain, use a placeholder like [RELEVANT STATUTE REFERENCE] instead.
 - After the complete document, add a line containing exactly ---NOTES--- followed by a short list of the placeholders used and any important assumptions or considerations. Keep notes concise.
-- If revising an existing draft based on a follow-up instruction, apply the requested changes while preserving the rest of the document, and output the FULL revised document again in the same format (document, then ---NOTES---, then notes).`;
+- If revising an existing draft based on a follow-up instruction, apply the requested changes while preserving the rest of the document, and output the FULL revised document again in the same format (document, then ---NOTES---, then notes).
+- If a reference document is attached, use it as a model for structure, tone, and clause style where appropriate, and pull in any concrete facts it contains (names, dates, amounts) instead of placeholders — but still flag in the notes anything you carried over from the reference that the user should double-check.`;
 
-const DRAFT_CATEGORIES = [
-  { icon: `<rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>`, label: "NDA", prompt: "Draft a mutual non-disclosure agreement between two companies" },
-  { icon: `<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/>`, label: "Affidavit", prompt: "Draft a general affidavit of facts" },
-  { icon: `<path d="M4 4h16v16H4z"/><path d="M4 4l8 8 8-8"/>`, label: "Demand letter", prompt: "Draft a demand letter for an unpaid invoice" },
-  { icon: `<path d="M3 10l9-7 9 7"/><path d="M5 9v11h14V9"/>`, label: "Tenancy", prompt: "Draft a residential tenancy agreement" },
-];
+/* ---- setup wizard state ---- */
+let draftWizard = { step: 1, useResearch: false };
 
-function renderDraftSuggestions(){
-  const row = document.getElementById("draftSuggestionGrid");
-  row.innerHTML = "";
-  DRAFT_CATEGORIES.forEach(c => {
-    const chip = document.createElement("div");
-    chip.className = "chip";
-    chip.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${c.icon}</svg><span>${c.label}</span>`;
-    chip.addEventListener("click", () => generateDraft(c.prompt));
-    row.appendChild(chip);
-  });
+function resetDraftWizard(){
+  draftWizard = { step: 1, useResearch: false };
+  document.getElementById("draftTypeCustom").value = "";
+  document.getElementById("draftParties").value = "";
+  document.getElementById("draftJurisdiction").value = "";
+  document.getElementById("draftDetails").value = "";
+  document.getElementById("draftSearchToggle").classList.remove("active");
+  clearAttachment();
+  goWizardStep(1);
+  updateWizardStep1State();
 }
+
+function goWizardStep(n){
+  draftWizard.step = n;
+  document.getElementById("wizardStep1").style.display = n === 1 ? "flex" : "none";
+  document.getElementById("wizardStep2").style.display = n === 2 ? "flex" : "none";
+  document.getElementById("wizStepInd1").classList.toggle("active", n === 1);
+  document.getElementById("wizStepInd1").classList.toggle("done", n > 1);
+  document.getElementById("wizStepInd2").classList.toggle("active", n === 2);
+  if(n === 2) renderWizardSummary();
+}
+
+function updateWizardStep1State(){
+  const hasAbout = document.getElementById("draftTypeCustom").value.trim();
+  const hasDetails = document.getElementById("draftDetails").value.trim();
+  document.getElementById("wizardToStep2").disabled = !(hasAbout || hasDetails);
+}
+
+function renderWizardSummary(){
+  const about = document.getElementById("draftTypeCustom").value.trim();
+  const parties = document.getElementById("draftParties").value.trim();
+  const jurisdiction = document.getElementById("draftJurisdiction").value.trim();
+  const details = document.getElementById("draftDetails").value.trim();
+  const el = document.getElementById("wizardSummary");
+  const rows = [];
+  if(about) rows.push(`<div><b>About:</b> ${escapeHtml(about)}</div>`);
+  if(parties) rows.push(`<div><b>Parties:</b> ${escapeHtml(parties)}</div>`);
+  if(jurisdiction) rows.push(`<div><b>Jurisdiction:</b> ${escapeHtml(jurisdiction)}</div>`);
+  if(details) rows.push(`<div><b>Details:</b> ${escapeHtml(details.slice(0,140))}${details.length > 140 ? "…" : ""}</div>`);
+  el.innerHTML = rows.length ? rows.join("") : `<span class="wizard-summary-empty">Nothing entered yet — go back to Setup.</span>`;
+}
+
+function buildDraftPrompt(){
+  const about = document.getElementById("draftTypeCustom").value.trim() || "a legal document";
+  const parties = document.getElementById("draftParties").value.trim();
+  const jurisdiction = document.getElementById("draftJurisdiction").value.trim();
+  const details = document.getElementById("draftDetails").value.trim();
+  let lines = [`Draft the following: ${about}.`];
+  if(parties) lines.push(`Parties involved: ${parties}.`);
+  if(jurisdiction) lines.push(`Jurisdiction: ${jurisdiction}.`);
+  if(details) lines.push(`Key terms and details: ${details}`);
+  return lines.join("\n");
+}
+
+function draftTitleFromWizard(){
+  const about = document.getElementById("draftTypeCustom").value.trim() || "New draft";
+  const parties = document.getElementById("draftParties").value.trim();
+  return parties ? `${about} — ${parties}` : about;
+}
+
+document.getElementById("draftTypeCustom").addEventListener("input", updateWizardStep1State);
+document.getElementById("draftDetails").addEventListener("input", updateWizardStep1State);
+document.getElementById("wizardToStep2").addEventListener("click", () => goWizardStep(2));
+document.getElementById("wizardBackTo1").addEventListener("click", () => goWizardStep(1));
+document.getElementById("draftSearchToggle").addEventListener("click", () => {
+  draftWizard.useResearch = !draftWizard.useResearch;
+  document.getElementById("draftSearchToggle").classList.toggle("active", draftWizard.useResearch);
+});
 
 function newDraft(){
   const d = { id: uid(), title: "New draft", versions: [], currentVersionIdx: -1, notes: "" };
@@ -1673,6 +1944,7 @@ function showDraftHome(){
   document.getElementById("draftFollowup").style.display = "none";
   document.getElementById("threadTitle").textContent = "";
   activeDraftId = null;
+  resetDraftWizard();
   renderDraftList();
 }
 
@@ -1725,19 +1997,20 @@ function renderDraftView(){
   }
 }
 
-async function generateDraft(text){
-  const content = text.trim();
-  if(!content || loading) return;
+async function generateDraft(){
+  if(loading) return;
+  const text = buildDraftPrompt();
   const d = newDraft();
-  d.title = content.slice(0, 46) + (content.length > 46 ? "…" : "");
+  const msg = buildUserMessage(text);
+  d.title = msg.attachmentName ? `📎 ${msg.attachmentName}` : draftTitleFromWizard();
+  const usedResearch = draftWizard.useResearch;
+  clearAttachment();
   showDraftView();
   loading = true;
   renderDraftView();
-  document.getElementById("draftInput").value = "";
-  updateDraftSendState();
 
   try{
-    const reply = await callClaude([{ role: "user", content }], DRAFTING_SYSTEM_PROMPT);
+    const reply = await callClaude([msg], DRAFTING_SYSTEM_PROMPT, usedResearch);
     const { doc, notes } = parseDraftResponse(reply.text);
     d.versions.push({ content: doc, createdAt: Date.now() });
     d.currentVersionIdx = 0;
@@ -1781,14 +2054,11 @@ async function reviseDraft(text){
 }
 
 function updateDraftSendState(){
-  document.getElementById("draftSendBtn").disabled = !document.getElementById("draftInput").value.trim() || loading;
+  document.getElementById("draftSendBtn").disabled = loading;
   document.getElementById("draftReviseSendBtn").disabled = !document.getElementById("draftReviseInput").value.trim() || loading;
 }
 
-const draftInput = document.getElementById("draftInput");
-draftInput.addEventListener("input", () => { autoGrow(draftInput); updateDraftSendState(); });
-draftInput.addEventListener("keydown", e => { if(e.key === "Enter" && !e.shiftKey){ e.preventDefault(); generateDraft(draftInput.value); } });
-document.getElementById("draftSendBtn").addEventListener("click", () => generateDraft(draftInput.value));
+document.getElementById("draftSendBtn").addEventListener("click", () => generateDraft());
 
 const draftReviseInput = document.getElementById("draftReviseInput");
 draftReviseInput.addEventListener("input", () => { autoGrow(draftReviseInput); updateDraftSendState(); });
@@ -1862,7 +2132,7 @@ function switchMode(mode){
   // Hide every top-level screen from every mode first, then show only
   // what the target mode needs — avoids stale screens leaking through.
   ["home","threadView","followup","draftHome","draftView","draftFollowup",
-   "studentHome","flashcardView","quizView","studyResult"].forEach(id => {
+   "studentHome","flashcardView","quizView","studyResult","tutorView","tutorFollowup"].forEach(id => {
     document.getElementById(id).style.display = "none";
   });
 
@@ -1872,8 +2142,7 @@ function switchMode(mode){
     if(activeDraftId && drafts.find(d => d.id === activeDraftId)) showDraftView(); else showDraftHome();
   } else {
     if(activeStudyId && studyDecks.find(d => d.id === activeStudyId)){
-      const d = studyDecks.find(x => x.id === activeStudyId);
-      if(d.type === "flashcards") startFlashcardSession(d); else startQuizSession(d);
+      openStudySession(studyDecks.find(x => x.id === activeStudyId));
       renderStudyList();
     } else {
       showStudentHome();
@@ -1886,7 +2155,6 @@ document.getElementById("navResearch").addEventListener("click", () => switchMod
 document.getElementById("navDrafting").addEventListener("click", () => switchMode("drafting"));
 document.getElementById("navStudent").addEventListener("click", () => switchMode("student"));
 
-renderDraftSuggestions();
 
 /* ==================== STUDENT MODE ==================== */
 
@@ -1898,23 +2166,31 @@ const QUIZ_SYSTEM_PROMPT = `You generate multiple-choice practice quizzes for la
 {"questions":[{"question":"...","options":["...","...","...","..."],"correctIndex":0,"explanation":"..."}]}
 Generate 6 to 8 questions with exactly 4 options each, covering key concepts for the requested topic. Do not fabricate specific case citations or section numbers; if referencing a case or statute, only do so if you are confident it is accurate, otherwise phrase the question around the general principle instead.`;
 
-const STUDENT_CATEGORIES = [
-  { icon: `<path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>`, label: "Contract law", prompt: "Offer, acceptance and consideration in contract law" },
-  { icon: `<circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 3"/>`, label: "Torts", prompt: "Negligence and duty of care in tort law" },
-  { icon: `<path d="M12 3v18M5 8l7-5 7 5M5 8l-2 9a2 2 0 0 0 2 2h4M19 8l2 9a2 2 0 0 1-2 2h-4"/>`, label: "Constitutional law", prompt: "Fundamental rights under the Nigerian Constitution" },
-  { icon: `<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>`, label: "Evidence", prompt: "Rules on admissibility of evidence" },
-];
+const TUTOR_SYSTEM_PROMPT = `You are LexAI's Tutor — a Socratic-style law tutor for a student working through a topic, in the spirit of guided study modes like ChatGPT Study Mode or Claude's Learning Mode.
 
-function renderStudentSuggestions(){
-  const row = document.getElementById("studentSuggestionGrid");
-  row.innerHTML = "";
-  STUDENT_CATEGORIES.forEach(c => {
-    const chip = document.createElement("div");
-    chip.className = "chip";
-    chip.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${c.icon}</svg><span>${c.label}</span>`;
-    chip.addEventListener("click", () => generateStudySet(c.prompt, studyMode));
-    row.appendChild(chip);
-  });
+Rules:
+- Do NOT just hand over a full direct answer to the topic or question. Instead, guide the student there: ask what they already know or think first, break the topic into smaller steps, and build up understanding piece by piece.
+- Keep each turn short — one idea or one guiding question at a time, not a lecture. A student should be able to read your message in a few seconds and respond.
+- Check understanding as you go (e.g. a quick "does that make sense so far?" or a small follow-up question) before moving to the next step.
+- If the student is clearly stuck, guessing wildly, or explicitly asks for the answer outright, give a brief, clear explanation of that specific step — then continue guiding from there rather than dumping the rest of the topic.
+- Adapt depth and pace to the student's responses: move faster if they're getting it, slow down and simplify if they're not.
+- Stay accurate. Never fabricate case names, citations, or section numbers — if uncertain, say so plainly and reason from the general principle instead.
+- Keep tone warm, encouraging, and patient — this is a study partner, not an exam.`;
+
+function studyModeLabel(mode){
+  return mode === "flashcards" ? "Flashcards" : mode === "quiz" ? "Quiz" : "Tutor";
+}
+
+function updateStudyCreateUI(){
+  const input = document.getElementById("studentInput");
+  const disclaimer = document.getElementById("studyCreateDisclaimer");
+  if(studyMode === "tutor"){
+    input.placeholder = "e.g. offer and acceptance in contract law";
+    disclaimer.textContent = "Lex's Tutor guides with questions rather than direct answers — it's practice support, not a substitute for your course materials.";
+  } else {
+    input.placeholder = "e.g. offer and acceptance in contract law";
+    disclaimer.textContent = "Practice material generated by Lex — not verified past exam questions. Useful for revision, not a substitute for your course materials.";
+  }
 }
 
 function extractJson(raw){
@@ -1928,15 +2204,94 @@ function studyLoadingHtml(label){
   return `<div class="thinking-row" style="padding:0;"><div class="gavel-loader"><svg viewBox="0 0 36 36" fill="currentColor"><g transform="rotate(-32 18 15)"><rect x="9" y="4" width="17" height="8" rx="2.6"/><rect x="14.7" y="12" width="5.6" height="17" rx="2.6"/></g><rect x="5" y="29.5" width="15" height="4.2" rx="2.1"/></svg></div><div class="thinking-label">${label}</div></div>`;
 }
 
+function openStudySession(deck){
+  if(deck.type === "flashcards") startFlashcardSession(deck);
+  else if(deck.type === "quiz") startQuizSession(deck);
+  else startTutorSession(deck);
+}
+
 function showStudentHome(){
   document.getElementById("flashcardView").style.display = "none";
   document.getElementById("quizView").style.display = "none";
   document.getElementById("studyResult").style.display = "none";
+  document.getElementById("tutorView").style.display = "none";
+  document.getElementById("tutorFollowup").style.display = "none";
   document.getElementById("studentHome").style.display = "flex";
   document.getElementById("threadTitle").textContent = "";
   activeStudyId = null;
   renderStudyList();
+  renderLibrary();
 }
+
+function deckTypeMeta(type){
+  if(type === "flashcards") return { label: "Cards", icon: `<rect x="3" y="4" width="14" height="18" rx="2" transform="rotate(-8 10 13)"/><rect x="6" y="2" width="14" height="18" rx="2"/>` };
+  if(type === "quiz") return { label: "Quiz", icon: `<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-2 1.8-2 3.5"/><circle cx="12" cy="16.5" r=".6" fill="currentColor"/>` };
+  return { label: "Tutor", icon: `<path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>` };
+}
+
+function renderLibrary(){
+  const grid = document.getElementById("libraryGrid");
+  const empty = document.getElementById("libraryEmpty");
+  grid.innerHTML = "";
+  if(studyDecks.length === 0){
+    empty.style.display = "block";
+    return;
+  }
+  empty.style.display = "none";
+  studyDecks.forEach(d => {
+    const meta = deckTypeMeta(d.type);
+    let metaLine, pct = 0;
+    if(d.type === "tutor"){
+      const exchanges = Math.floor((d.messages || []).length / 2);
+      metaLine = `${exchanges} exchange${exchanges === 1 ? "" : "s"}`;
+    } else {
+      const total = d.type === "flashcards" ? d.cards.length : d.questions.length;
+      metaLine = `${total} ${d.type === "flashcards" ? "card" : "question"}${total === 1 ? "" : "s"}`;
+      if(d.lastResult){
+        pct = d.lastResult.total ? Math.round((d.lastResult.score / d.lastResult.total) * 100) : 0;
+        metaLine += ` · last ${d.type === "flashcards" ? "known" : "score"} ${d.lastResult.score}/${d.lastResult.total}`;
+      }
+    }
+    const card = document.createElement("div");
+    card.className = "deck-card";
+    card.innerHTML = `
+      <button class="deck-card-delete" title="Delete"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg></button>
+      <div class="deck-card-top">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${meta.icon}</svg>
+        <span class="deck-type-badge">${meta.label}</span>
+      </div>
+      <div class="deck-card-title">${escapeHtml(d.title)}</div>
+      <div class="deck-card-meta"><span>${escapeHtml(metaLine)}</span></div>
+      ${d.type !== "tutor" && d.lastResult ? `<div class="deck-card-progress"><div class="deck-card-progress-fill" style="width:${pct}%;"></div></div>` : ""}
+    `;
+    card.addEventListener("click", () => {
+      activeStudyId = d.id;
+      openStudySession(d);
+    });
+    card.querySelector(".deck-card-delete").addEventListener("click", (e) => {
+      e.stopPropagation();
+      studyDecks = studyDecks.filter(x => x.id !== d.id);
+      if(activeStudyId === d.id) activeStudyId = null;
+      saveThreads();
+      renderLibrary();
+      renderStudyList();
+    });
+    grid.appendChild(card);
+  });
+}
+
+function openStudyCreate(){
+  document.getElementById("studyCreateBackdrop").classList.add("show");
+  setTimeout(() => document.getElementById("studentInput").focus(), 50);
+}
+function closeStudyCreate(){
+  document.getElementById("studyCreateBackdrop").classList.remove("show");
+}
+document.getElementById("newStudySetBtn").addEventListener("click", openStudyCreate);
+document.getElementById("studyCreateCloseBtn").addEventListener("click", closeStudyCreate);
+document.getElementById("studyCreateBackdrop").addEventListener("click", (e) => {
+  if(e.target === document.getElementById("studyCreateBackdrop")) closeStudyCreate();
+});
 
 function showStudyError(type){
   document.getElementById("flashcardView").style.display = "none";
@@ -1949,8 +2304,15 @@ function showStudyError(type){
 async function generateStudySet(topic, type){
   const content = topic.trim();
   if(!content || loading) return;
-  const deck = { id: uid(), title: content.slice(0, 46) + (content.length > 46 ? "…" : ""), type, cards: [], questions: [] };
 
+  if(type === "tutor"){
+    await startTutorFromTopic(content);
+    return;
+  }
+
+  const deck = { id: uid(), title: content.slice(0, 46) + (content.length > 46 ? "…" : ""), type, cards: [], questions: [], lastResult: null };
+
+  closeStudyCreate();
   document.getElementById("studentHome").style.display = "none";
   document.getElementById("studyResult").style.display = "none";
   loading = true;
@@ -2008,6 +2370,107 @@ async function generateStudySet(topic, type){
   }
 }
 
+/* ---- tutor (Socratic chat) ---- */
+function renderTutorInner(){
+  const wrap = document.getElementById("tutorInner");
+  const deck = studyDecks.find(d => d.id === activeStudyId);
+  wrap.innerHTML = "";
+  if(!deck) return;
+  deck.messages.forEach((m, i) => {
+    const row = document.createElement("div");
+    if(m.role === "user"){
+      row.className = "msg-row user";
+      row.innerHTML = `
+        <div class="user-bubble" data-index="${i}">${escapeHtml(m.content)}</div>
+        <div class="user-actions" data-index="${i}">
+          <button class="uact-retry" title="Retry"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12a9 9 0 1 1-3-6.7"/><polyline points="21 3 21 9 15 9"/></svg></button>
+          <button class="uact-edit" title="Edit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></button>
+          <button class="uact-copy" title="Copy"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+        </div>`;
+    } else {
+      row.className = "msg-row assistant";
+      let inner = `<div class="assistant-label"><svg width="13" height="13" viewBox="0 0 36 36" fill="currentColor" class="assistant-mark"><g transform="rotate(-38 18 15)"><rect x="9" y="4" width="17" height="8" rx="2.6"/><rect x="14.7" y="12" width="5.6" height="17" rx="2.6"/></g><rect x="5" y="29.5" width="15" height="4.2" rx="2.1"/></svg><span class="assistant-name">Lex Tutor</span></div>`;
+      inner += `<div class="answer${m.isError ? ' error' : ''}" data-index="${i}">${formatAnswer(m.content)}</div>`;
+      if(!m.isError){
+        inner += `
+          <div class="msg-actions" data-index="${i}">
+            <button class="act-copy" title="Copy"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+            <button class="act-read" title="Read aloud"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polygon points="4 8 8 8 12 4 12 20 8 16 4 16 4 8"/><path d="M16 9a4 4 0 0 1 0 6"/></svg></button>
+            <button class="act-up" title="Good response"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 11v10H4a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1zM7 11l4-8a2 2 0 0 1 4 1.5V9h5.5a2 2 0 0 1 2 2.3l-1.2 8A2 2 0 0 1 19.3 21H10a3 3 0 0 1-3-3"/></svg></button>
+            <button class="act-down" title="Poor response"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 13V3h3a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1zM17 13l-4 8a2 2 0 0 1-4-1.5V15H3.5a2 2 0 0 1-2-2.3l1.2-8A2 2 0 0 1 4.7 3H14a3 3 0 0 1 3 3"/></svg></button>
+            <button class="act-regen" title="Regenerate"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12a9 9 0 1 1-3-6.7"/><polyline points="21 3 21 9 15 9"/></svg></button>
+          </div>`;
+      }
+      row.innerHTML = inner;
+    }
+    wrap.appendChild(row);
+  });
+  if(loading){
+    const row = document.createElement("div");
+    row.className = "thinking-row";
+    row.innerHTML = `<div class="gavel-loader"><svg viewBox="0 0 36 36" fill="currentColor"><g transform="rotate(-32 18 15)"><rect x="9" y="4" width="17" height="8" rx="2.6"/><rect x="14.7" y="12" width="5.6" height="17" rx="2.6"/></g><rect x="5" y="29.5" width="15" height="4.2" rx="2.1"/></svg></div><div class="thinking-label">Thinking…</div>`;
+    wrap.appendChild(row);
+  }
+  wireMessageActions();
+  wireUserActions();
+  wireLongPress();
+  document.getElementById("tutorView").scrollTop = document.getElementById("tutorView").scrollHeight;
+}
+
+function startTutorSession(deck){
+  document.getElementById("studentHome").style.display = "none";
+  document.getElementById("studyResult").style.display = "none";
+  document.getElementById("flashcardView").style.display = "none";
+  document.getElementById("quizView").style.display = "none";
+  document.getElementById("tutorView").style.display = "flex";
+  document.getElementById("tutorFollowup").style.display = "block";
+  document.getElementById("threadTitle").textContent = deck.title;
+  activeStudyId = deck.id;
+  renderTutorInner();
+  renderStudyList();
+}
+
+async function startTutorFromTopic(topic){
+  const deck = { id: uid(), title: topic.slice(0, 46) + (topic.length > 46 ? "…" : ""), type: "tutor", messages: [] };
+  closeStudyCreate();
+  studyDecks.unshift(deck);
+  activeStudyId = deck.id;
+  document.getElementById("studentInput").value = "";
+  updateStudentSendState();
+  startTutorSession(deck);
+  await sendTutorMessage(`I want to learn about: ${topic}`, true);
+}
+
+async function sendTutorMessage(text, isFirst){
+  const content = text.trim();
+  const deck = studyDecks.find(d => d.id === activeStudyId);
+  if(!content || loading || !deck) return;
+  deck.messages.push({ role: "user", content });
+  loading = true;
+  if(!isFirst){ document.getElementById("tutorInput").value = ""; updateTutorSendState(); }
+  renderTutorInner();
+
+  try{
+    const reply = await callClaude(deck.messages, TUTOR_SYSTEM_PROMPT);
+    deck.messages.push({ role: "assistant", content: reply.text });
+  } catch(e){
+    deck.messages.push({ role: "assistant", content: "Something went wrong reaching the AI service. Please try again.", isError: true });
+  } finally {
+    loading = false;
+    renderTutorInner();
+    renderStudyList();
+    saveThreads();
+  }
+}
+
+function updateTutorSendState(){
+  document.getElementById("tutorSendBtn").disabled = !document.getElementById("tutorInput").value.trim() || loading;
+}
+const tutorInput = document.getElementById("tutorInput");
+tutorInput.addEventListener("input", () => { autoGrow(tutorInput); updateTutorSendState(); });
+tutorInput.addEventListener("keydown", e => { if(e.key === "Enter" && !e.shiftKey){ e.preventDefault(); sendTutorMessage(tutorInput.value); } });
+document.getElementById("tutorSendBtn").addEventListener("click", () => sendTutorMessage(tutorInput.value));
+
 /* ---- flashcards ---- */
 let fcSequence = [], fcReviewQueue = [], fcIndex = 0, fcKnownCount = 0, fcFlipped = false;
 
@@ -2029,23 +2492,81 @@ function renderFlashcard(){
   const card = fcSequence[fcIndex];
   document.getElementById("fcProgressLabel").textContent = `Card ${fcIndex + 1} of ${fcSequence.length}`;
   document.getElementById("fcKnownLabel").textContent = `${fcKnownCount} known`;
+  document.getElementById("fcProgressFill").style.width = `${Math.round((fcIndex / fcSequence.length) * 100)}%`;
   document.getElementById("fcFront").textContent = card.front;
-  document.getElementById("fcFront").style.display = "flex";
   document.getElementById("fcBack").textContent = card.back;
-  document.getElementById("fcBack").style.display = "none";
-  document.getElementById("fcHint").textContent = "Tap the card to flip";
+  document.getElementById("fcHint").textContent = "Tap to flip";
   document.getElementById("fcControls").style.display = "none";
+  document.getElementById("flashcard").classList.remove("flipped");
   fcFlipped = false;
 }
 
-document.getElementById("flashcard").addEventListener("click", () => {
+function flipFlashcard(){
   if(fcSequence.length === 0 || loading) return;
   fcFlipped = !fcFlipped;
-  document.getElementById("fcFront").style.display = fcFlipped ? "none" : "flex";
-  document.getElementById("fcBack").style.display = fcFlipped ? "flex" : "none";
-  document.getElementById("fcHint").textContent = fcFlipped ? "" : "Tap the card to flip";
+  document.getElementById("flashcard").classList.toggle("flipped", fcFlipped);
+  document.getElementById("fcHint").textContent = fcFlipped ? "Swipe right if you knew it, left if not" : "Tap to flip";
   document.getElementById("fcControls").style.display = fcFlipped ? "flex" : "none";
+}
+
+/* ---- drag-to-swipe (Tinder-style: right = knew it, left = still learning) ---- */
+const fcDragEl = document.getElementById("flashcardDrag");
+let fcDragStartX = 0, fcDragCurrentX = 0, fcIsDragging = false;
+
+fcDragEl.addEventListener("pointerdown", (e) => {
+  if(fcSequence.length === 0 || loading) return;
+  fcIsDragging = true;
+  fcDragStartX = e.clientX;
+  fcDragCurrentX = 0;
+  fcDragEl.classList.add("dragging");
+  fcDragEl.setPointerCapture?.(e.pointerId);
 });
+
+fcDragEl.addEventListener("pointermove", (e) => {
+  if(!fcIsDragging) return;
+  fcDragCurrentX = e.clientX - fcDragStartX;
+  const rotate = fcDragCurrentX / 18;
+  fcDragEl.style.transform = `translateX(${fcDragCurrentX}px) rotate(${rotate}deg)`;
+  fcDragEl.classList.toggle("swipe-right", fcFlipped && fcDragCurrentX > 40);
+  fcDragEl.classList.toggle("swipe-left", fcFlipped && fcDragCurrentX < -40);
+});
+
+function fcEndDrag(){
+  if(!fcIsDragging) return;
+  fcIsDragging = false;
+  fcDragEl.classList.remove("dragging");
+  const moved = Math.abs(fcDragCurrentX);
+  const threshold = 90;
+
+  if(moved < 6){
+    // A tap, not a drag.
+    fcDragEl.style.transform = "";
+    flipFlashcard();
+    fcDragCurrentX = 0;
+    return;
+  }
+
+  if(fcFlipped && moved > threshold){
+    const knewIt = fcDragCurrentX > 0;
+    const flyDir = knewIt ? 1 : -1;
+    fcDragEl.style.transition = "transform .35s ease";
+    fcDragEl.style.transform = `translateX(${flyDir * 700}px) rotate(${flyDir * 28}deg)`;
+    setTimeout(() => {
+      fcDragEl.style.transition = "";
+      fcDragEl.style.transform = "";
+      fcDragEl.classList.remove("swipe-right", "swipe-left");
+      advanceFlashcard(knewIt);
+    }, 260);
+  } else {
+    fcDragEl.style.transition = "transform .25s ease";
+    fcDragEl.style.transform = "translateX(0px) rotate(0deg)";
+    fcDragEl.classList.remove("swipe-right", "swipe-left");
+    setTimeout(() => { fcDragEl.style.transition = ""; }, 260);
+  }
+  fcDragCurrentX = 0;
+}
+fcDragEl.addEventListener("pointerup", fcEndDrag);
+fcDragEl.addEventListener("pointerleave", () => { if(fcIsDragging) fcEndDrag(); });
 
 function advanceFlashcard(knewIt){
   if(knewIt) fcKnownCount++;
@@ -2057,10 +2578,16 @@ function advanceFlashcard(knewIt){
       fcReviewQueue = [];
       fcIndex = 0;
     } else {
+      document.getElementById("fcProgressFill").style.width = "100%";
       document.getElementById("flashcardView").style.display = "none";
       document.getElementById("studyResult").style.display = "flex";
       document.getElementById("resultTitle").textContent = "Deck complete";
       document.getElementById("resultDetail").textContent = `You knew ${fcKnownCount} card${fcKnownCount === 1 ? "" : "s"} along the way.`;
+      const deck = studyDecks.find(d => d.id === activeStudyId);
+      if(deck){
+        deck.lastResult = { score: fcKnownCount, total: deck.cards.length };
+        saveThreads();
+      }
       return;
     }
   }
@@ -2130,6 +2657,11 @@ document.getElementById("qzNextBtn").addEventListener("click", () => {
     document.getElementById("studyResult").style.display = "flex";
     document.getElementById("resultTitle").textContent = "Quiz complete";
     document.getElementById("resultDetail").textContent = `You scored ${qzScore} out of ${qzQuestions.length}.`;
+    const deck = studyDecks.find(d => d.id === activeStudyId);
+    if(deck){
+      deck.lastResult = { score: qzScore, total: qzQuestions.length };
+      saveThreads();
+    }
     return;
   }
   renderQuizQuestion();
@@ -2141,16 +2673,16 @@ document.getElementById("studyRestartBtn").addEventListener("click", () => {
 });
 
 /* ---- student home controls ---- */
-document.getElementById("studyModeFlashcards").addEventListener("click", () => {
-  studyMode = "flashcards";
-  document.getElementById("studyModeFlashcards").classList.add("on");
-  document.getElementById("studyModeQuiz").classList.remove("on");
-});
-document.getElementById("studyModeQuiz").addEventListener("click", () => {
-  studyMode = "quiz";
-  document.getElementById("studyModeQuiz").classList.add("on");
-  document.getElementById("studyModeFlashcards").classList.remove("on");
-});
+function setStudyMode(mode){
+  studyMode = mode;
+  document.getElementById("studyModeFlashcards").classList.toggle("on", mode === "flashcards");
+  document.getElementById("studyModeQuiz").classList.toggle("on", mode === "quiz");
+  document.getElementById("studyModeTutor").classList.toggle("on", mode === "tutor");
+  updateStudyCreateUI();
+}
+document.getElementById("studyModeFlashcards").addEventListener("click", () => setStudyMode("flashcards"));
+document.getElementById("studyModeQuiz").addEventListener("click", () => setStudyMode("quiz"));
+document.getElementById("studyModeTutor").addEventListener("click", () => setStudyMode("tutor"));
 
 const studentInput = document.getElementById("studentInput");
 studentInput.addEventListener("input", () => { autoGrow(studentInput); updateStudentSendState(); });
@@ -2167,11 +2699,11 @@ function renderStudyList(){
   studyDecks.forEach(d => {
     const el = document.createElement("div");
     el.className = "thread-item" + (d.id === activeStudyId ? " active" : "");
-    const kindLabel = d.type === "flashcards" ? "Cards" : "Quiz";
+    const kindLabel = deckTypeMeta(d.type).label;
     el.innerHTML = `<span class="thread-item-title">${escapeHtml(d.title)} · ${kindLabel}</span><button class="thread-delete" title="Delete"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg></button>`;
     el.querySelector(".thread-item-title").addEventListener("click", () => {
       activeStudyId = d.id;
-      if(d.type === "flashcards") startFlashcardSession(d); else startQuizSession(d);
+      openStudySession(d);
       closeSidebarMobile();
     });
     el.querySelector(".thread-delete").addEventListener("click", (e) => {
@@ -2185,7 +2717,6 @@ function renderStudyList(){
   });
 }
 
-renderStudentSuggestions();
 
 /* ==================== DOCUMENT ATTACH + SEARCH TOGGLE ==================== */
 
@@ -2217,6 +2748,7 @@ async function handleFileAttach(file){
     }
     renderAttachmentChip();
     updateSendStates();
+    updateDraftSendState();
   } catch(e){
     alert("Couldn't read that file. Please try again.");
   }
@@ -2236,14 +2768,16 @@ function renderAttachmentChip(){
     </div>` : "";
   document.getElementById("homeAttachChip").innerHTML = html;
   document.getElementById("followAttachChip").innerHTML = html;
+  document.getElementById("draftAttachChip").innerHTML = html;
   document.querySelectorAll(".attach-chip-remove").forEach(btn => {
-    btn.addEventListener("click", () => { clearAttachment(); updateSendStates(); });
+    btn.addEventListener("click", () => { clearAttachment(); updateSendStates(); updateDraftSendState(); });
   });
 }
 
 const fileInput = document.getElementById("fileInput");
 document.getElementById("homeAttachBtn").addEventListener("click", () => fileInput.click());
 document.getElementById("followAttachBtn").addEventListener("click", () => fileInput.click());
+document.getElementById("draftAttachBtn").addEventListener("click", () => fileInput.click());
 fileInput.addEventListener("change", async (e) => {
   const file = e.target.files[0];
   if(file) await handleFileAttach(file);
