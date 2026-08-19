@@ -239,7 +239,6 @@
     padding:40px 36px; font-size:14.5px; line-height:1.8; font-family:'Public Sans',sans-serif; color:var(--ink); resize:vertical;
   }
   .draft-page-edit:focus{ outline:none; }
-  .draft-notes{ padding:14px 20px; font-size:12.5px; color:var(--dim); background:var(--panel, var(--hover)); border-top:1px solid var(--line-soft); flex-shrink:0; }
 
   /* ---- student mode: library home ---- */
   .library{ flex:1; overflow-y:auto; padding:6vh 20px 40px 20px; }
@@ -418,6 +417,43 @@
     margin-right:5px; animation: think-pulse 1.1s ease-in-out infinite;
   }
   @keyframes think-pulse{ 0%,100%{ opacity:.2; } 50%{ opacity:1; } }
+
+  /* ---- live step checklist (plan → work → done, tap to expand) ---- */
+  .steps-panel{
+    margin-bottom:16px; border:1px solid var(--line-soft); border-radius:12px; overflow:hidden; background:var(--bg);
+  }
+  .steps-panel-toggle{
+    width:100%; display:flex; align-items:center; gap:7px; background:transparent; border:none; color:var(--dim);
+    font-family:'Space Mono',monospace; font-size:11px; letter-spacing:.02em; cursor:pointer; padding:10px 12px; text-align:left;
+  }
+  .steps-panel-toggle:hover{ background:var(--hover); }
+  .steps-panel-toggle svg{ transition:transform .15s ease; flex-shrink:0; }
+  .steps-panel.open .steps-panel-toggle svg{ transform:rotate(90deg); }
+  .steps-panel-body{ display:none; padding:0 12px 10px 12px; }
+  .steps-panel.open .steps-panel-body{ display:block; }
+  .step-row{ padding:7px 0; border-top:1px solid var(--line-soft); }
+  .step-row:first-child{ border-top:none; }
+  .step-row-head{ display:flex; align-items:center; gap:9px; cursor:pointer; }
+  .step-icon{ display:flex; align-items:center; justify-content:center; width:16px; height:16px; flex-shrink:0; color:var(--faint); }
+  .step-row.status-completed .step-icon{ color:var(--ink); }
+  .step-row.status-in_progress .step-icon{ color:var(--ink); }
+  .step-title{ font-size:13px; color:var(--dim); flex:1; }
+  .step-row.status-completed .step-title{ color:var(--faint); text-decoration:line-through; text-decoration-color:var(--line); }
+  .step-row.status-in_progress .step-title{ color:var(--ink); font-weight:600; }
+  .step-chevron{ flex-shrink:0; color:var(--faint); transition:transform .15s ease; }
+  .step-row.expanded .step-chevron{ transform:rotate(90deg); }
+  .step-row-body{
+    display:none; margin:8px 0 2px 25px; padding-left:12px; border-left:2px solid var(--line);
+    font-size:12.5px; line-height:1.6; color:var(--dim);
+  }
+  .step-row.expanded .step-row-body{ display:block; }
+  .step-row-body p{ margin:0 0 8px 0; }
+  .step-row-body p:last-child{ margin-bottom:0; }
+  .step-pending-dot{ width:7px; height:7px; border-radius:50%; border:1.5px solid var(--faint); display:inline-block; }
+  .step-live-dot{
+    width:8px; height:8px; border-radius:50%; background:var(--ink); display:inline-block;
+    animation: think-pulse 1.1s ease-in-out infinite;
+  }
   .think-block.think-live .think-body{ display:block; max-height:170px; overflow-y:auto; scroll-behavior:smooth; }
   .think-placeholder{ color:var(--faint); font-style:italic; }
   .live-cursor{ display:inline-block; width:2px; height:15px; background:var(--ink); margin-left:2px; vertical-align:text-bottom; animation:think-pulse .9s ease-in-out infinite; }
@@ -815,17 +851,10 @@
         </div>
       </div>
       <div class="draft-page-wrap" id="draftPageWrap">
-        <div class="think-block" id="draftThinkBlock" style="display:none;">
-          <button class="think-toggle" id="draftThinkToggle">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-            <span id="draftThinkLabel">Thought process</span>
-          </button>
-          <div class="think-body" id="draftThinkBody"></div>
-        </div>
+        <div id="draftThinkBlock" style="display:none;"></div>
         <div class="draft-page" id="draftPage"></div>
         <textarea class="draft-page-edit" id="draftPageEdit" style="display:none;"></textarea>
       </div>
-      <div class="draft-notes" id="draftNotes" style="display:none;"></div>
     </div>
 
     <div class="followup" id="draftFollowup" style="display:none;">
@@ -1260,12 +1289,14 @@ function renderThreadInner(){
     } else {
       row.className = "msg-row assistant";
       let inner = `<div class="assistant-label"><svg width="13" height="13" viewBox="0 0 36 36" fill="currentColor" class="assistant-mark"><g transform="rotate(-38 18 15)"><rect x="9" y="4" width="17" height="8" rx="2.6"/><rect x="14.7" y="12" width="5.6" height="17" rx="2.6"/></g><rect x="5" y="29.5" width="15" height="4.2" rx="2.1"/></svg><span class="assistant-name">LexAI</span></div>`;
-      if(m.thinking){
+      if(Array.isArray(m.steps) && m.steps.length){
+        inner += `<div class="msg-steps-holder" data-index="${i}">${renderStepsHtml(m.steps)}</div>`;
+      } else if(m.thinking){
         inner += `
-          <div class="think-block${m.streaming ? ' open think-live' : ''}" data-index="${i}">
+          <div class="think-block" data-index="${i}">
             <button class="think-toggle">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-              ${m.streaming ? '<span class="think-live-dot"></span>Thinking…' : 'Thought process'}
+              Thought process
             </button>
             <div class="think-body">${formatAnswer(m.thinking)}</div>
           </div>`;
@@ -1291,6 +1322,7 @@ function renderThreadInner(){
   wireMessageActions();
   wireUserActions();
   wireLongPress();
+  wireStepsPanel(wrap);
   document.querySelectorAll(".think-toggle").forEach(btn => {
     btn.addEventListener("click", () => {
       if(btn.parentElement.classList.contains("think-live")) return;
@@ -1400,6 +1432,108 @@ async function callClaudeStream(threadMessages, systemPrompt, useSearch, onThoug
   return { text, thinking, sources };
 }
 
+const PLAN_SYSTEM_PROMPT = `You break a task into a short working plan before it's carried out. Output ONLY valid JSON, no markdown fences, no commentary, in exactly this shape:
+{"steps":["...","...","..."]}
+Produce 3 to 6 short steps (each under 8 words, written as a gerund phrase like "Identifying relevant statutes" or "Drafting the indemnity clause"), specific to the actual task described, in the order they'd genuinely be tackled. Do not include a step for "reviewing" or "finalizing" unless the task specifically calls for it.`;
+
+async function planSteps(taskDescription, fallback){
+  try{
+    const reply = await callClaude([{ role: "user", content: `Task: ${taskDescription}` }], PLAN_SYSTEM_PROMPT);
+    const parsed = extractJson(reply.text);
+    if(Array.isArray(parsed.steps) && parsed.steps.length >= 2){
+      return parsed.steps.slice(0, 6).map(s => String(s));
+    }
+  } catch(e){ /* fall through to fallback */ }
+  return fallback;
+}
+
+function stepMarkerInstructions(steps){
+  const numbered = steps.map((s, i) => `${i + 1}. ${s}`).join("\n");
+  return `\n\nYou have already planned the following steps for this task:\n${numbered}\n\nAs you reason, work through them in order. Immediately before starting each one, output a line containing ONLY: ### STEP <n> (where <n> is that step's number) — then continue your reasoning for that step on the following lines. Do this for every step, in order, once each.`;
+}
+
+// Parses the accumulated "thinking" buffer for "### STEP <n>" markers and
+// returns { currentNum, bodies } — bodies[n] is the reasoning captured
+// under step n so far. Works on the full buffer each call (not deltas),
+// so a marker split across two stream chunks still resolves correctly
+// once the buffer contains it whole.
+function parseStepBuffer(buffer){
+  const re = /###\s*STEP\s*(\d+)\s*:?/gi;
+  const matches = [...buffer.matchAll(re)];
+  const bodies = {};
+  let currentNum = 0;
+  matches.forEach((m, idx) => {
+    const n = parseInt(m[1], 10);
+    currentNum = Math.max(currentNum, n);
+    const start = m.index + m[0].length;
+    const end = idx + 1 < matches.length ? matches[idx + 1].index : buffer.length;
+    bodies[n] = (bodies[n] || "") + buffer.slice(start, end);
+  });
+  return { currentNum, bodies };
+}
+
+// Builds a { steps, statusOf } live-tracker object used to render a
+// pending/in_progress/completed checklist (à la Claude Code's TodoWrite)
+// while a plan is being executed against real streamed reasoning.
+function makeStepTracker(planTitles){
+  return planTitles.map((title, i) => ({ num: i + 1, title, status: "pending", body: "" }));
+}
+function updateStepTracker(tracker, buffer){
+  const { currentNum, bodies } = parseStepBuffer(buffer);
+  tracker.forEach(step => {
+    step.body = bodies[step.num] || "";
+    if(step.num < currentNum) step.status = "completed";
+    else if(step.num === currentNum) step.status = "in_progress";
+    else step.status = "pending";
+  });
+}
+function finishStepTracker(tracker){
+  tracker.forEach(step => { if(step.status !== "completed") step.status = "completed"; });
+}
+
+function stepStatusIcon(status){
+  if(status === "completed") return `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+  if(status === "in_progress") return `<span class="step-live-dot"></span>`;
+  return `<span class="step-pending-dot"></span>`;
+}
+
+function renderStepsHtml(steps, opts){
+  opts = opts || {};
+  const allDone = steps.every(s => s.status === "completed");
+  const label = allDone ? `Worked through ${steps.length} step${steps.length === 1 ? "" : "s"}` : "Working…";
+  const rows = steps.map(s => `
+    <div class="step-row status-${s.status}" data-step="${s.num}">
+      <div class="step-row-head">
+        <span class="step-icon">${stepStatusIcon(s.status)}</span>
+        <span class="step-title">${escapeHtml(s.title)}</span>
+        ${s.body ? `<svg class="step-chevron" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>` : ""}
+      </div>
+      ${s.body ? `<div class="step-row-body">${formatAnswer(s.body.trim())}</div>` : ""}
+    </div>`).join("");
+  return `
+    <div class="steps-panel${allDone ? "" : " open"}" data-open="${allDone ? "0" : "1"}">
+      <button class="steps-panel-toggle">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        <span class="steps-panel-label">${label}</span>
+      </button>
+      <div class="steps-panel-body">${rows}</div>
+    </div>`;
+}
+
+function wireStepsPanel(container){
+  container.querySelectorAll(".steps-panel-toggle").forEach(btn => {
+    btn.addEventListener("click", () => {
+      btn.closest(".steps-panel").classList.toggle("open");
+    });
+  });
+  container.querySelectorAll(".step-row").forEach(row => {
+    if(!row.querySelector(".step-row-body")) return;
+    row.querySelector(".step-row-head").addEventListener("click", () => {
+      row.classList.toggle("expanded");
+    });
+  });
+}
+
 function buildUserMessage(typedText){
   const content = typedText.trim();
   if(!pendingAttachment) return { role: "user", content, displayContent: content };
@@ -1421,44 +1555,54 @@ function buildUserMessage(typedText){
 // localStorage) on every single token. Falls back to a full render for the
 // very first chunk, when the row doesn't exist in the DOM yet.
 function updateStreamingMessageDOM(idx, m){
-  const wrap = document.getElementById("threadInner");
-  const answerEl = wrap.querySelector(`.answer[data-index="${idx}"]`);
+  const answerEl = document.querySelector(`.answer[data-index="${idx}"]`);
   if(!answerEl){
     renderThreadInner();
     return;
-  }
-  const row = answerEl.closest(".msg-row");
-  let thinkBlock = row.querySelector(".think-block");
-  if(m.thinking){
-    if(!thinkBlock){
-      thinkBlock = document.createElement("div");
-      thinkBlock.className = "think-block open think-live";
-      thinkBlock.dataset.index = idx;
-      thinkBlock.innerHTML = `<button class="think-toggle"><span class="think-live-dot"></span>Thinking…</button><div class="think-body"></div>`;
-      row.insertBefore(thinkBlock, answerEl);
-    }
-    thinkBlock.querySelector(".think-body").innerHTML = formatAnswer(m.thinking);
-    const body = thinkBlock.querySelector(".think-body");
-    body.scrollTop = body.scrollHeight;
   }
   answerEl.innerHTML = formatAnswer(m.content) + (m.content ? '<span class="live-cursor"></span>' : '');
   document.getElementById("threadView").scrollTop = document.getElementById("threadView").scrollHeight;
 }
 
+function updateStreamingStepsDOM(idx, tracker){
+  const holder = document.querySelector(`.msg-steps-holder[data-index="${idx}"]`);
+  if(!holder){
+    renderThreadInner();
+    return;
+  }
+  holder.innerHTML = renderStepsHtml(tracker);
+  wireStepsPanel(holder);
+  document.getElementById("threadView").scrollTop = document.getElementById("threadView").scrollHeight;
+}
+
 async function runResearchStream(t, usedSearch){
-  const placeholder = { role: "assistant", content: "", thinking: "", sources: [], streaming: true };
-  const contextMessages = t.messages.slice(); // everything sent so far, excluding the placeholder
+  const contextMessages = t.messages.slice(); // everything sent so far
+  const lastUser = [...contextMessages].reverse().find(m => m.role === "user");
+  const taskDesc = lastUser ? (lastUser.displayContent !== undefined ? lastUser.displayContent : lastUser.content) : "Answer the question";
+
+  // Show the existing "Reasoning…" loader while the plan itself is being
+  // worked out — there's no message row yet to attach a checklist to.
+  renderThreadInner();
+
+  const fallbackSteps = ["Understanding the question", "Recalling the relevant law", "Composing the answer"];
+  const planTitles = await planSteps(taskDesc, fallbackSteps);
+  const tracker = makeStepTracker(planTitles);
+
+  const placeholder = { role: "assistant", content: "", steps: tracker, sources: [], streaming: true };
   t.messages.push(placeholder);
   const idx = t.messages.length - 1;
   renderThreadInner();
 
+  const streamSystem = SYSTEM_PROMPT + stepMarkerInstructions(planTitles);
+
   try{
-    const reply = await callClaudeStream(contextMessages, undefined, usedSearch,
-      (chunk, full) => { placeholder.thinking = full; updateStreamingMessageDOM(idx, placeholder); },
-      (chunk, full) => { placeholder.content = full; updateStreamingMessageDOM(idx, placeholder); }
+    const reply = await callClaudeStream(contextMessages, streamSystem, usedSearch,
+      (chunk, full) => { updateStepTracker(tracker, full); updateStreamingStepsDOM(idx, tracker); },
+      (chunk, full) => { finishStepTracker(tracker); placeholder.content = full; updateStreamingMessageDOM(idx, placeholder); }
     );
     placeholder.content = reply.text;
-    placeholder.thinking = reply.thinking;
+    finishStepTracker(tracker);
+    placeholder.steps = tracker.map(s => ({ num: s.num, title: s.title, status: "completed", body: s.body }));
     placeholder.sources = reply.sources;
     delete placeholder.streaming;
   } catch(e){
@@ -2163,23 +2307,21 @@ function renderDraftView(){
   const verLabel = document.getElementById("draftVerLabel");
   const prevBtn = document.getElementById("draftVerPrev");
   const nextBtn = document.getElementById("draftVerNext");
-  const notesEl = document.getElementById("draftNotes");
-  const thinkBlock = document.getElementById("draftThinkBlock");
+  const stepsHolder = document.getElementById("draftThinkBlock");
 
   page.style.display = draftEditing ? "none" : "block";
   editEl.style.display = draftEditing ? "block" : "none";
 
-  // While actively streaming, startDraftThinkLive()/updateDraftThinkLive()/
-  // updateDraftLiveText() are driving the DOM directly — leave it alone here.
+  // While actively streaming, the plan/step-tracking functions below are
+  // driving the DOM directly — leave it alone here.
   if(draftStreaming) return;
 
   if(loading && d.versions.length === 0){
-    thinkBlock.style.display = "none";
+    stepsHolder.style.display = "none";
     page.innerHTML = `<div class="thinking-row"><div class="gavel-loader"><svg viewBox="0 0 36 36" fill="currentColor"><g transform="rotate(-32 18 15)"><rect x="9" y="4" width="17" height="8" rx="2.6"/><rect x="14.7" y="12" width="5.6" height="17" rx="2.6"/></g><rect x="5" y="29.5" width="15" height="4.2" rx="2.1"/></svg></div><div class="thinking-label">Drafting…</div></div>`;
     verLabel.textContent = "";
     prevBtn.disabled = true;
     nextBtn.disabled = true;
-    notesEl.style.display = "none";
     return;
   }
 
@@ -2190,60 +2332,38 @@ function renderDraftView(){
   prevBtn.disabled = d.currentVersionIdx <= 0;
   nextBtn.disabled = d.currentVersionIdx >= d.versions.length - 1;
 
-  // Show the AI's actual reasoning for the *current* version, collapsed by
-  // default — tap to expand and read the whole thing.
-  if(d.thinking && d.currentVersionIdx === d.versions.length - 1){
-    thinkBlock.style.display = "block";
-    thinkBlock.classList.remove("think-live", "open");
-    document.getElementById("draftThinkLabel").textContent = "Thought process";
-    document.getElementById("draftThinkBody").innerHTML = formatAnswer(d.thinking);
+  // Show the real step-by-step plan Lex worked through for the *current*
+  // version, collapsed by default — tap the panel to expand it, tap any
+  // step to see the reasoning captured under it.
+  if(Array.isArray(d.steps) && d.steps.length && d.currentVersionIdx === d.versions.length - 1){
+    stepsHolder.style.display = "block";
+    stepsHolder.innerHTML = renderStepsHtml(d.steps);
+    wireStepsPanel(stepsHolder);
   } else {
-    thinkBlock.style.display = "none";
-  }
-
-  if(d.notes){
-    notesEl.style.display = "block";
-    notesEl.innerHTML = `<strong>Notes:</strong> ${escapeHtml(d.notes)}`;
-  } else {
-    notesEl.style.display = "none";
+    stepsHolder.style.display = "none";
   }
 }
 
-document.getElementById("draftThinkToggle").addEventListener("click", () => {
-  const block = document.getElementById("draftThinkBlock");
-  if(block.classList.contains("think-live")) return; // no manual toggle mid-stream, it's already open
-  block.classList.toggle("open");
-});
-
-function startDraftThinkLive(){
+function startDraftPlanning(){
   document.getElementById("draftPage").style.display = "block";
   document.getElementById("draftPageEdit").style.display = "none";
   document.getElementById("draftVerLabel").textContent = "Drafting…";
   document.getElementById("draftVerPrev").disabled = true;
   document.getElementById("draftVerNext").disabled = true;
-  document.getElementById("draftNotes").style.display = "none";
   document.getElementById("draftPage").innerHTML = "";
-  const block = document.getElementById("draftThinkBlock");
-  block.style.display = "block";
-  block.classList.add("open", "think-live");
-  document.getElementById("draftThinkLabel").innerHTML = `<span class="think-live-dot"></span>Thinking…`;
-  document.getElementById("draftThinkBody").innerHTML = `<span class="think-placeholder">Working out how to structure this…</span>`;
+  const holder = document.getElementById("draftThinkBlock");
+  holder.style.display = "block";
+  holder.innerHTML = `<div class="thinking-row" style="padding:2px 0;"><div class="gavel-loader"><svg viewBox="0 0 36 36" fill="currentColor"><g transform="rotate(-32 18 15)"><rect x="9" y="4" width="17" height="8" rx="2.6"/><rect x="14.7" y="12" width="5.6" height="17" rx="2.6"/></g><rect x="5" y="29.5" width="15" height="4.2" rx="2.1"/></svg></div><div class="thinking-label">Planning…</div></div>`;
 }
 
-function updateDraftThinkLive(fullThinking){
-  const body = document.getElementById("draftThinkBody");
-  body.innerHTML = formatAnswer(fullThinking) || `<span class="think-placeholder">Working out how to structure this…</span>`;
-  body.scrollTop = body.scrollHeight;
+function renderDraftStepsLive(tracker){
+  const holder = document.getElementById("draftThinkBlock");
+  holder.style.display = "block";
+  holder.innerHTML = renderStepsHtml(tracker);
+  wireStepsPanel(holder);
 }
 
 function updateDraftLiveText(fullText){
-  // Once the actual document starts arriving, collapse the thinking panel
-  // down to a small closed toggle and start building the draft live.
-  const block = document.getElementById("draftThinkBlock");
-  if(block.classList.contains("think-live")){
-    block.classList.remove("think-live", "open");
-    document.getElementById("draftThinkLabel").textContent = "Thought process";
-  }
   const visible = fullText.split("---NOTES---")[0];
   document.getElementById("draftPage").innerHTML = formatAnswer(visible) + `<span class="live-cursor"></span>`;
 }
@@ -2259,18 +2379,26 @@ async function generateDraft(){
   showDraftView();
   loading = true;
   draftStreaming = true;
-  startDraftThinkLive();
+  startDraftPlanning();
+
+  const fallbackSteps = ["Reviewing the request", "Structuring the document", "Drafting the substantive content", "Checking terms and formatting"];
+  const planTitles = await planSteps(text, fallbackSteps);
+  const tracker = makeStepTracker(planTitles);
+  renderDraftStepsLive(tracker);
+
+  const streamSystem = DRAFTING_SYSTEM_PROMPT + stepMarkerInstructions(planTitles);
 
   try{
-    const reply = await callClaudeStream([msg], DRAFTING_SYSTEM_PROMPT, usedResearch,
-      (chunk, full) => updateDraftThinkLive(full),
-      (chunk, full) => updateDraftLiveText(full)
+    const reply = await callClaudeStream([msg], streamSystem, usedResearch,
+      (chunk, full) => { updateStepTracker(tracker, full); renderDraftStepsLive(tracker); },
+      (chunk, full) => { finishStepTracker(tracker); updateDraftLiveText(full); }
     );
     const { doc, notes } = parseDraftResponse(reply.text);
+    finishStepTracker(tracker);
     d.versions.push({ content: doc, createdAt: Date.now() });
     d.currentVersionIdx = 0;
     d.notes = notes;
-    d.thinking = reply.thinking;
+    d.steps = tracker.map(s => ({ num: s.num, title: s.title, status: "completed", body: s.body }));
   } catch(e){
     d.versions.push({ content: "Something went wrong generating this draft. Please try again.", createdAt: Date.now() });
     d.currentVersionIdx = 0;
