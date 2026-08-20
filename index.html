@@ -418,42 +418,68 @@
   }
   @keyframes think-pulse{ 0%,100%{ opacity:.2; } 50%{ opacity:1; } }
 
-  /* ---- live step checklist (plan → work → done, tap to expand) ---- */
-  .steps-panel{
-    margin-bottom:16px; border:1px solid var(--line-soft); border-radius:12px; overflow:hidden; background:var(--bg);
-  }
+  /* ---- live AI work panel (plan → work → done, tap to inspect) ---- */
+  .steps-panel{ margin-bottom:18px; }
   .steps-panel-toggle{
-    width:100%; display:flex; align-items:center; gap:7px; background:transparent; border:none; color:var(--dim);
-    font-family:'Space Mono',monospace; font-size:11px; letter-spacing:.02em; cursor:pointer; padding:10px 12px; text-align:left;
+    display:flex; align-items:center; gap:7px; background:transparent; border:none; color:var(--dim);
+    font-family:'Public Sans',sans-serif; font-size:13.5px; font-weight:500; cursor:pointer; padding:4px 2px;
+    border-radius:6px; transition:color .15s ease, background .15s ease;
   }
-  .steps-panel-toggle:hover{ background:var(--hover); }
-  .steps-panel-toggle svg{ transition:transform .15s ease; flex-shrink:0; }
+  .steps-panel-toggle:hover{ color:var(--ink); background:var(--hover); }
+  .steps-panel-toggle svg{ transition:transform .2s ease; flex-shrink:0; color:var(--faint); }
   .steps-panel.open .steps-panel-toggle svg{ transform:rotate(90deg); }
-  .steps-panel-body{ display:none; padding:0 12px 10px 12px; }
-  .steps-panel.open .steps-panel-body{ display:block; }
-  .step-row{ padding:7px 0; border-top:1px solid var(--line-soft); }
-  .step-row:first-child{ border-top:none; }
-  .step-row-head{ display:flex; align-items:center; gap:9px; cursor:pointer; }
-  .step-icon{ display:flex; align-items:center; justify-content:center; width:16px; height:16px; flex-shrink:0; color:var(--faint); }
+
+  /* Smooth height animation via the 0fr→1fr grid trick — works even while
+     step content keeps growing/changing mid-stream, no JS measuring needed. */
+  .steps-panel-collapse{ display:grid; grid-template-rows:0fr; transition:grid-template-rows .28s ease; }
+  .steps-panel.open .steps-panel-collapse{ grid-template-rows:1fr; }
+  .steps-panel-collapse-inner{ overflow:hidden; }
+  .steps-list{ padding-top:10px; }
+
+  .step-row{ display:flex; gap:11px; position:relative; }
+  .step-line-col{ position:relative; width:16px; flex-shrink:0; display:flex; justify-content:center; padding-top:3px; }
+  .step-line-col::before{
+    content:""; position:absolute; top:17px; bottom:-3px; left:50%; width:1px;
+    background:var(--line); transform:translateX(-50%);
+  }
+  .step-row:last-child .step-line-col::before{ display:none; }
+  .step-icon{
+    width:14px; height:14px; display:flex; align-items:center; justify-content:center;
+    border-radius:50%; flex-shrink:0; color:var(--faint); position:relative; z-index:1; background:var(--bg);
+  }
   .step-row.status-completed .step-icon{ color:var(--ink); }
   .step-row.status-in_progress .step-icon{ color:var(--ink); }
-  .step-title{ font-size:13px; color:var(--dim); flex:1; }
-  .step-row.status-completed .step-title{ color:var(--faint); text-decoration:line-through; text-decoration-color:var(--line); }
-  .step-row.status-in_progress .step-title{ color:var(--ink); font-weight:600; }
-  .step-chevron{ flex-shrink:0; color:var(--faint); transition:transform .15s ease; }
-  .step-row.expanded .step-chevron{ transform:rotate(90deg); }
-  .step-row-body{
-    display:none; margin:8px 0 2px 25px; padding-left:12px; border-left:2px solid var(--line);
-    font-size:12.5px; line-height:1.6; color:var(--dim);
+
+  .step-content{ flex:1; min-width:0; padding-bottom:15px; }
+  .step-row:last-child .step-content{ padding-bottom:2px; }
+  .step-row-head{ display:flex; align-items:center; gap:6px; cursor:pointer; min-height:20px; }
+  .step-title{
+    font-family:'Public Sans',sans-serif; font-size:14px; line-height:1.4; color:var(--dim); flex:1;
   }
-  .step-row.expanded .step-row-body{ display:block; }
+  .step-row.status-completed .step-title{ color:var(--dim); }
+  .step-row.status-in_progress .step-title{ color:var(--ink); font-weight:600; }
+  .step-row.status-pending .step-title{ color:var(--faint); }
+  .step-chevron{ flex-shrink:0; color:var(--faint); transition:transform .2s ease; }
+  .step-row.expanded .step-chevron{ transform:rotate(90deg); }
+
+  .step-row-collapse{ display:grid; grid-template-rows:0fr; transition:grid-template-rows .25s ease; }
+  .step-row.expanded .step-row-collapse{ grid-template-rows:1fr; }
+  .step-row-collapse-inner{ overflow:hidden; }
+  .step-row-body{
+    margin:6px 0 0 0; padding:2px 0 0 0; font-size:13px; line-height:1.65; color:var(--faint);
+  }
   .step-row-body p{ margin:0 0 8px 0; }
   .step-row-body p:last-child{ margin-bottom:0; }
-  .step-pending-dot{ width:7px; height:7px; border-radius:50%; border:1.5px solid var(--faint); display:inline-block; }
-  .step-live-dot{
-    width:8px; height:8px; border-radius:50%; background:var(--ink); display:inline-block;
-    animation: think-pulse 1.1s ease-in-out infinite;
+
+  .step-pending-dot{ width:6px; height:6px; border-radius:50%; border:1.5px solid var(--line); background:var(--bg); }
+  .step-check{ display:flex; }
+  .step-live-dot{ position:relative; width:7px; height:7px; border-radius:50%; background:var(--ink); }
+  .step-live-dot::after{
+    content:""; position:absolute; inset:-5px; border-radius:50%; border:1.5px solid var(--ink);
+    opacity:.5; animation: step-ping 1.5s ease-out infinite;
   }
+  @keyframes step-ping{ 0%{ transform:scale(.5); opacity:.55; } 100%{ transform:scale(2.1); opacity:0; } }
+
   .think-block.think-live .think-body{ display:block; max-height:170px; overflow-y:auto; scroll-behavior:smooth; }
   .think-placeholder{ color:var(--faint); font-style:italic; }
   .live-cursor{ display:inline-block; width:2px; height:15px; background:var(--ink); margin-left:2px; vertical-align:text-bottom; animation:think-pulse .9s ease-in-out infinite; }
@@ -1492,7 +1518,7 @@ function finishStepTracker(tracker){
 }
 
 function stepStatusIcon(status){
-  if(status === "completed") return `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+  if(status === "completed") return `<span class="step-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>`;
   if(status === "in_progress") return `<span class="step-live-dot"></span>`;
   return `<span class="step-pending-dot"></span>`;
 }
@@ -1503,20 +1529,33 @@ function renderStepsHtml(steps, opts){
   const label = allDone ? `Worked through ${steps.length} step${steps.length === 1 ? "" : "s"}` : "Working…";
   const rows = steps.map(s => `
     <div class="step-row status-${s.status}" data-step="${s.num}">
-      <div class="step-row-head">
+      <div class="step-line-col">
         <span class="step-icon">${stepStatusIcon(s.status)}</span>
-        <span class="step-title">${escapeHtml(s.title)}</span>
-        ${s.body ? `<svg class="step-chevron" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>` : ""}
       </div>
-      ${s.body ? `<div class="step-row-body">${formatAnswer(s.body.trim())}</div>` : ""}
+      <div class="step-content">
+        <div class="step-row-head">
+          <span class="step-title">${escapeHtml(s.title)}</span>
+          ${s.body ? `<svg class="step-chevron" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>` : ""}
+        </div>
+        ${s.body ? `
+        <div class="step-row-collapse">
+          <div class="step-row-collapse-inner">
+            <div class="step-row-body">${formatAnswer(s.body.trim())}</div>
+          </div>
+        </div>` : ""}
+      </div>
     </div>`).join("");
   return `
     <div class="steps-panel${allDone ? "" : " open"}" data-open="${allDone ? "0" : "1"}">
       <button class="steps-panel-toggle">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
         <span class="steps-panel-label">${label}</span>
       </button>
-      <div class="steps-panel-body">${rows}</div>
+      <div class="steps-panel-collapse">
+        <div class="steps-panel-collapse-inner">
+          <div class="steps-list">${rows}</div>
+        </div>
+      </div>
     </div>`;
 }
 
