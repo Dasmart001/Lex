@@ -109,7 +109,7 @@
   .topbar{ display:flex; align-items:center; gap:10px; padding:16px 24px; flex-shrink:0; border-bottom:1px solid transparent; }
   .topbar.scrolled{ border-bottom-color:var(--line); }
   .menu-btn{ display:none; }
-  .thread-title{ font-family:'Libre Caslon Text',serif; font-style:italic; font-size:16px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .thread-title{ font-family:'Public Sans',sans-serif; font-style:normal; font-weight:600; font-size:15px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .badge{ margin-left:auto; font-family:'Space Mono',monospace; font-size:10px; color:var(--dim); border:1px solid var(--line); padding:4px 9px; flex-shrink:0; border-radius:5px; }
 
   /* ---- HOME ---- */
@@ -338,6 +338,7 @@
   .user-bubble{
     max-width:78%; background:var(--ink); color:var(--inv); font-size:15px; line-height:1.55;
     padding:11px 16px; border-radius:16px 16px 4px 16px; white-space:pre-wrap; word-break:break-word;
+    -webkit-touch-callout:none;
   }
   .msg-attach-chip{
     display:flex; align-items:center; gap:6px; background:rgba(255,255,255,0.14); border-radius:7px;
@@ -352,7 +353,7 @@
   .assistant-mark{ flex-shrink:0; }
   .assistant-name{ font-family:'Space Mono',monospace; font-size:10.5px; color:var(--faint); letter-spacing:.05em; text-transform:uppercase; }
 
-  .answer{ font-size:15px; line-height:1.75; }
+  .answer{ font-size:15px; line-height:1.75; -webkit-touch-callout:none; }
   .answer p{ margin:0 0 14px 0; }
   .answer p:last-child{ margin-bottom:0; }
   .answer h3{ font-family:'Libre Caslon Text',serif; font-size:17px; margin:20px 0 10px 0; font-weight:700; }
@@ -1280,9 +1281,9 @@ function renderThreadInner(){
     }
     wrap.appendChild(row);
   });
-  wireMessageActions();
-  wireUserActions();
-  wireLongPress();
+  wireMessageActions(wrap);
+  wireUserActions(wrap);
+  wireLongPress(wrap);
   wireThinkBlock(wrap);
   const lastMsg = t.messages[t.messages.length - 1];
   if(loading && !(lastMsg && lastMsg.role === "assistant" && lastMsg.streaming)){
@@ -1454,7 +1455,8 @@ function buildUserMessage(typedText){
 // localStorage) on every single token. Falls back to a full render for the
 // very first chunk, when the row doesn't exist in the DOM yet.
 function updateStreamingMessageDOM(idx, m){
-  const answerEl = document.querySelector(`.answer[data-index="${idx}"]`);
+  const wrap = document.getElementById("threadInner");
+  const answerEl = wrap.querySelector(`.answer[data-index="${idx}"]`);
   if(!answerEl){
     renderThreadInner();
     return;
@@ -1464,7 +1466,8 @@ function updateStreamingMessageDOM(idx, m){
 }
 
 function updateStreamingThinkDOM(idx, thinkingText){
-  const block = document.querySelector(`.think-block[data-index="${idx}"]`);
+  const wrap = document.getElementById("threadInner");
+  const block = wrap.querySelector(`.think-block[data-index="${idx}"]`);
   if(!block){
     renderThreadInner();
     return;
@@ -1478,14 +1481,16 @@ function updateStreamingThinkDOM(idx, thinkingText){
 }
 
 function updateStreamingTimerDOM(idx, startedAt){
-  const block = document.querySelector(`.think-block[data-index="${idx}"]`);
+  const wrap = document.getElementById("threadInner");
+  const block = wrap.querySelector(`.think-block[data-index="${idx}"]`);
   if(!block) return;
   const timerEl = block.querySelector(".think-timer");
   if(timerEl) timerEl.textContent = elapsedSeconds(startedAt) + "s";
 }
 
 function finalizeStreamingThinkDOM(idx, seconds){
-  const block = document.querySelector(`.think-block[data-index="${idx}"]`);
+  const wrap = document.getElementById("threadInner");
+  const block = wrap.querySelector(`.think-block[data-index="${idx}"]`);
   if(!block) return;
   block.classList.remove("think-live", "open");
   const label = block.querySelector(".think-toggle-label");
@@ -1582,10 +1587,10 @@ function activeChatSession(){
   };
 }
 
-function wireMessageActions(){
+function wireMessageActions(container){
   const s = activeChatSession();
   if(!s) return;
-  document.querySelectorAll(".msg-actions").forEach(bar => {
+  container.querySelectorAll(".msg-actions").forEach(bar => {
     const idx = parseInt(bar.dataset.index, 10);
     const msg = s.messages[idx];
 
@@ -1649,11 +1654,12 @@ function wireMessageActions(){
 let longPressTimer = null;
 let ctxTargetIndex = null;
 let ctxTargetRole = null;
+let ctxTargetEl = null;
 
-function wireUserActions(){
+function wireUserActions(container){
   const s = activeChatSession();
   if(!s) return;
-  document.querySelectorAll(".user-actions").forEach(bar => {
+  container.querySelectorAll(".user-actions").forEach(bar => {
     const idx = parseInt(bar.dataset.index, 10);
     const msg = s.messages[idx];
 
@@ -1701,12 +1707,12 @@ function wireUserActions(){
   });
 }
 
-function wireLongPress(){
-  document.querySelectorAll(".user-bubble, .answer[data-index]").forEach(bubble => {
+function wireLongPress(container){
+  container.querySelectorAll(".user-bubble, .answer[data-index]").forEach(bubble => {
     const start = (e) => {
       longPressTimer = setTimeout(() => {
         const rect = bubble.getBoundingClientRect();
-        openCtxMenu(rect, parseInt(bubble.dataset.index, 10), bubble.classList.contains("answer") ? "assistant" : "user");
+        openCtxMenu(rect, parseInt(bubble.dataset.index, 10), bubble.classList.contains("answer") ? "assistant" : "user", bubble);
       }, 480);
     };
     const cancel = () => { clearTimeout(longPressTimer); };
@@ -1716,12 +1722,17 @@ function wireLongPress(){
     bubble.addEventListener("mousedown", start);
     bubble.addEventListener("mouseup", cancel);
     bubble.addEventListener("mouseleave", cancel);
+    // Some browsers (notably Android Chrome) fire a native "contextmenu"
+    // event on long-press of text, which pops its own selection UI and
+    // steals the gesture our custom menu depends on. Block it here.
+    bubble.addEventListener("contextmenu", (e) => e.preventDefault());
   });
 }
 
-function openCtxMenu(rect, index, role){
+function openCtxMenu(rect, index, role, el){
   ctxTargetIndex = index;
   ctxTargetRole = role || "user";
+  ctxTargetEl = el || null;
   const menu = document.getElementById("ctxMenu");
   const backdrop = document.getElementById("ctxBackdrop");
   document.getElementById("ctxEdit").style.display = ctxTargetRole === "user" ? "flex" : "none";
@@ -1742,6 +1753,7 @@ function closeCtxMenu(){
   document.getElementById("ctxBackdrop").classList.remove("show");
   ctxTargetIndex = null;
   ctxTargetRole = null;
+  ctxTargetEl = null;
 }
 
 document.getElementById("ctxBackdrop").addEventListener("click", closeCtxMenu);
@@ -1756,19 +1768,14 @@ document.getElementById("ctxCopy").addEventListener("click", () => {
 });
 
 document.getElementById("ctxSelect").addEventListener("click", () => {
-  if(ctxTargetIndex !== null){
-    const selector = ctxTargetRole === "assistant"
-      ? `.answer[data-index="${ctxTargetIndex}"]`
-      : `.user-bubble[data-index="${ctxTargetIndex}"]`;
-    const el = document.querySelector(selector);
-    if(el){
-      const range = document.createRange();
-      range.selectNodeContents(el);
-      const sel = window.getSelection();
-      sel.removeAllRanges();
-      sel.addRange(range);
-      armSelectionDismiss();
-    }
+  const el = ctxTargetEl;
+  if(el && document.body.contains(el)){
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    armSelectionDismiss();
   }
   closeCtxMenu();
 });
@@ -2277,23 +2284,22 @@ function startDraftThinking(){
   holder.innerHTML = renderThinkBlockHtml("draft", "", true, 0);
   wireThinkBlock(holder);
   beginThinkTimer(() => {
-    const block = document.querySelector('.think-block[data-index="draft"]');
-    const timerEl = block && block.querySelector(".think-timer");
+    const timerEl = holder.querySelector(".think-timer");
     if(timerEl) timerEl.textContent = elapsedSeconds(draftThinkStartedAt) + "s";
   });
 }
 
 function updateDraftThinking(fullThinking){
-  const block = document.querySelector('.think-block[data-index="draft"]');
-  if(!block) return;
-  const body = block.querySelector(".think-body");
+  const holder = document.getElementById("draftThinkBlock");
+  const body = holder.querySelector(".think-body");
   if(body){ body.innerHTML = formatAnswer(fullThinking); body.scrollTop = body.scrollHeight; }
 }
 
 function finishDraftThinking(){
   endThinkTimer();
   const seconds = elapsedSeconds(draftThinkStartedAt);
-  const block = document.querySelector('.think-block[data-index="draft"]');
+  const holder = document.getElementById("draftThinkBlock");
+  const block = holder.querySelector(".think-block");
   if(block){
     block.classList.remove("think-live", "open");
     const label = block.querySelector(".think-toggle-label");
@@ -2742,9 +2748,9 @@ function renderTutorInner(){
     row.innerHTML = `<div class="gavel-loader"><svg viewBox="0 0 36 36" fill="currentColor"><g transform="rotate(-32 18 15)"><rect x="9" y="4" width="17" height="8" rx="2.6"/><rect x="14.7" y="12" width="5.6" height="17" rx="2.6"/></g><rect x="5" y="29.5" width="15" height="4.2" rx="2.1"/></svg></div><div class="thinking-label">Thinking…</div>`;
     wrap.appendChild(row);
   }
-  wireMessageActions();
-  wireUserActions();
-  wireLongPress();
+  wireMessageActions(wrap);
+  wireUserActions(wrap);
+  wireLongPress(wrap);
   document.getElementById("tutorView").scrollTop = document.getElementById("tutorView").scrollHeight;
 }
 
