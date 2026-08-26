@@ -22,6 +22,9 @@
   html,body{height:100%; overscroll-behavior:none;}
   body{ margin:0; background:var(--bg); color:var(--ink); font-family:'Public Sans',sans-serif; -webkit-font-smoothing:antialiased; }
   ::selection{ background:var(--ink); color:var(--inv); }
+  ::-moz-selection{ background:var(--ink); color:var(--inv); }
+  .user-bubble ::selection{ background:rgba(255,255,255,0.92); color:var(--ink); }
+  .user-bubble ::-moz-selection{ background:rgba(255,255,255,0.92); color:var(--ink); }
   .serif{ font-family:'Libre Caslon Text',serif; }
   .mono{ font-family:'Space Mono',monospace; }
 
@@ -571,6 +574,27 @@
     </div>
   </div>
 
+  <!-- Guaranteed manual-copy fallback: shown only if programmatic copy
+       (Clipboard API + execCommand) both fail, e.g. inside an iframe whose
+       parent hasn't granted clipboard-write permission. Manual, user-
+       initiated copy from a selected textarea is never subject to that
+       restriction, so this always works as a last resort. -->
+  <div class="modal-backdrop" id="copyFallbackBackdrop">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <div class="modal-head">
+        <span class="t">Copy text</span>
+        <button class="icon-btn" id="copyFallbackClose">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body" style="padding:2px 16px 18px 16px;">
+        <p style="font-size:12.5px; color:var(--faint); margin:0 0 10px 0; line-height:1.5;">Automatic copy isn't available in this view. The text below is already selected — use your device's own Copy (long-press, or Ctrl/Cmd+C).</p>
+        <textarea id="copyFallbackText" readonly class="wizard-textarea" style="width:100%; min-height:150px; box-sizing:border-box;"></textarea>
+      </div>
+    </div>
+  </div>
+
   <div class="voice-overlay" id="voiceOverlay">
     <button class="voice-close" id="voiceCloseBtn" title="End voice chat">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -1082,21 +1106,39 @@ function activeThread(){ return threads.find(t => t.id === activeId); }
 // clipboard-write isn't permitted (sandboxed iframes, non-secure origins,
 // older WebViews). Returns a promise resolving true/false on success.
 function copyToClipboard(text){
+  // Try the classic synchronous method first. execCommand('copy') only
+  // succeeds when called synchronously inside the actual click handler —
+  // if we tried the async Clipboard API first and fell back to this only
+  // inside its .catch(), the browser may have already discarded the
+  // "trusted user gesture" context by then, causing the fallback to fail
+  // silently too. Sandboxed/restricted contexts often allow execCommand
+  // even when they block the permission-gated Clipboard API outright.
+  if(fallbackCopy(text)) return Promise.resolve(true);
   if(navigator.clipboard && navigator.clipboard.writeText){
-    return navigator.clipboard.writeText(text).then(() => true).catch(() => fallbackCopy(text));
+    return navigator.clipboard.writeText(text).then(() => true).catch(() => false);
   }
-  return Promise.resolve(fallbackCopy(text));
+  return Promise.resolve(false);
 }
 function fallbackCopy(text){
   try{
     const ta = document.createElement("textarea");
     ta.value = text;
+    // Keep it within the viewport (just invisible) rather than pushed
+    // off-screen — some mobile browsers silently refuse .select()/
+    // execCommand('copy') on elements positioned outside the viewport.
     ta.style.position = "fixed";
-    ta.style.top = "-1000px";
-    ta.style.left = "-1000px";
+    ta.style.top = "0";
+    ta.style.left = "0";
+    ta.style.width = "1px";
+    ta.style.height = "1px";
+    ta.style.padding = "0";
+    ta.style.opacity = "0";
+    ta.style.pointerEvents = "none";
+    ta.setAttribute("readonly", "");
     document.body.appendChild(ta);
-    ta.focus();
+    ta.focus({ preventScroll: true });
     ta.select();
+    ta.setSelectionRange(0, text.length);
     const ok = document.execCommand("copy");
     document.body.removeChild(ta);
     return ok;
@@ -1104,6 +1146,39 @@ function fallbackCopy(text){
     return false;
   }
 }
+
+function showCopyFallback(text){
+  const backdrop = document.getElementById("copyFallbackBackdrop");
+  const ta = document.getElementById("copyFallbackText");
+  ta.value = text;
+  backdrop.classList.add("show");
+  setTimeout(() => {
+    ta.focus();
+    ta.select();
+    ta.setSelectionRange(0, text.length);
+  }, 60);
+}
+
+// Use this everywhere a copy button lives. Tries the programmatic methods
+// first; if both are blocked (e.g. this page is embedded in an iframe
+// whose parent hasn't granted clipboard-write permission — a real browser
+// restriction, not something fixable from inside this page's own code),
+// it falls back to a visible, pre-selected textarea so the person can
+// still copy manually. Manual, user-initiated copy is never subject to
+// that restriction, so this path always works.
+function copyWithFallback(text){
+  return copyToClipboard(text).then(ok => {
+    if(!ok) showCopyFallback(text);
+    return ok;
+  });
+}
+
+document.getElementById("copyFallbackClose").addEventListener("click", () => {
+  document.getElementById("copyFallbackBackdrop").classList.remove("show");
+});
+document.getElementById("copyFallbackBackdrop").addEventListener("click", (e) => {
+  if(e.target.id === "copyFallbackBackdrop") document.getElementById("copyFallbackBackdrop").classList.remove("show");
+});
 
 function escapeHtml(str){
   return str.replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -1596,7 +1671,7 @@ function wireMessageActions(container){
 
     const copyBtn = bar.querySelector(".act-copy");
     copyBtn.addEventListener("click", () => {
-      copyToClipboard(msg.content).then(ok => {
+      copyWithFallback(msg.content).then(ok => {
         if(ok){
           copyBtn.classList.add("active");
           setTimeout(() => copyBtn.classList.remove("active"), 900);
@@ -1655,6 +1730,7 @@ let longPressTimer = null;
 let ctxTargetIndex = null;
 let ctxTargetRole = null;
 let ctxTargetEl = null;
+let ctxOpenedAt = 0;
 
 function wireUserActions(container){
   const s = activeChatSession();
@@ -1665,7 +1741,7 @@ function wireUserActions(container){
 
     const copyBtn = bar.querySelector(".uact-copy");
     copyBtn.addEventListener("click", () => {
-      copyToClipboard(msg.displayContent !== undefined ? msg.displayContent : msg.content).then(ok => {
+      copyWithFallback(msg.displayContent !== undefined ? msg.displayContent : msg.content).then(ok => {
         if(ok){
           copyBtn.classList.add("active");
           setTimeout(() => copyBtn.classList.remove("active"), 900);
@@ -1709,18 +1785,34 @@ function wireUserActions(container){
 
 function wireLongPress(container){
   container.querySelectorAll(".user-bubble, .answer[data-index]").forEach(bubble => {
+    let firedLongPress = false;
     const start = (e) => {
+      firedLongPress = false;
       longPressTimer = setTimeout(() => {
+        firedLongPress = true;
         const rect = bubble.getBoundingClientRect();
         openCtxMenu(rect, parseInt(bubble.dataset.index, 10), bubble.classList.contains("answer") ? "assistant" : "user", bubble);
       }, 480);
     };
     const cancel = () => { clearTimeout(longPressTimer); };
+    const release = (e) => {
+      clearTimeout(longPressTimer);
+      if(firedLongPress){
+        // The finger/cursor is releasing right where the menu's backdrop
+        // just appeared on top of this bubble — swallow this specific
+        // touchend/mouseup so it can't turn into a ghost click on the
+        // backdrop (which would instantly close the menu we just opened)
+        // or otherwise misfire before the person makes a real, separate tap.
+        e.preventDefault();
+        e.stopPropagation();
+        firedLongPress = false;
+      }
+    };
     bubble.addEventListener("touchstart", start, { passive: true });
-    bubble.addEventListener("touchend", cancel);
+    bubble.addEventListener("touchend", release);
     bubble.addEventListener("touchmove", cancel);
     bubble.addEventListener("mousedown", start);
-    bubble.addEventListener("mouseup", cancel);
+    bubble.addEventListener("mouseup", release);
     bubble.addEventListener("mouseleave", cancel);
     // Some browsers (notably Android Chrome) fire a native "contextmenu"
     // event on long-press of text, which pops its own selection UI and
@@ -1733,10 +1825,10 @@ function openCtxMenu(rect, index, role, el){
   ctxTargetIndex = index;
   ctxTargetRole = role || "user";
   ctxTargetEl = el || null;
+  ctxOpenedAt = Date.now();
   const menu = document.getElementById("ctxMenu");
   const backdrop = document.getElementById("ctxBackdrop");
   document.getElementById("ctxEdit").style.display = ctxTargetRole === "user" ? "flex" : "none";
-  menu.style.display = "block";
   const menuWidth = 200;
   let left = Math.min(rect.right - menuWidth, window.innerWidth - menuWidth - 12);
   left = Math.max(12, left);
@@ -1749,20 +1841,28 @@ function openCtxMenu(rect, index, role, el){
 }
 
 function closeCtxMenu(){
-  document.getElementById("ctxMenu").classList.remove("show");
+  const menu = document.getElementById("ctxMenu");
+  menu.classList.remove("show");
+  menu.style.display = "";
   document.getElementById("ctxBackdrop").classList.remove("show");
   ctxTargetIndex = null;
   ctxTargetRole = null;
   ctxTargetEl = null;
 }
 
-document.getElementById("ctxBackdrop").addEventListener("click", closeCtxMenu);
+document.getElementById("ctxBackdrop").addEventListener("click", () => {
+  // Ignore a stray click landing on the backdrop within the same gesture
+  // that just opened it (the release of the long-press can briefly hit
+  // this element before the person makes a deliberate separate tap).
+  if(Date.now() - ctxOpenedAt < 350) return;
+  closeCtxMenu();
+});
 
 document.getElementById("ctxCopy").addEventListener("click", () => {
   const s = activeChatSession();
   if(s && ctxTargetIndex !== null){
     const m = s.messages[ctxTargetIndex];
-    copyToClipboard(m.displayContent !== undefined ? m.displayContent : m.content);
+    copyWithFallback(m.displayContent !== undefined ? m.displayContent : m.content);
   }
   closeCtxMenu();
 });
@@ -1797,12 +1897,13 @@ function armSelectionDismiss(){
     document.removeEventListener("touchstart", clear, true);
     document.removeEventListener("mousedown", clear, true);
   };
-  // Defer binding by a tick so the click that triggered selection doesn't
-  // immediately re-trigger this same listener.
+  // Defer binding well past the tap that triggered selection (and any
+  // trailing ghost touch/mouse events the same gesture might still
+  // generate) so it can't immediately clear the selection it just made.
   setTimeout(() => {
     document.addEventListener("touchstart", clear, true);
     document.addEventListener("mousedown", clear, true);
-  }, 50);
+  }, 400);
 }
 
 document.getElementById("ctxEdit").addEventListener("click", () => {
@@ -2434,7 +2535,7 @@ document.getElementById("draftCopyBtn").addEventListener("click", () => {
   const d = activeDraft();
   if(!d || !d.versions[d.currentVersionIdx]) return;
   const btn = document.getElementById("draftCopyBtn");
-  copyToClipboard(d.versions[d.currentVersionIdx].content).then(ok => {
+  copyWithFallback(d.versions[d.currentVersionIdx].content).then(ok => {
     if(ok){
       btn.classList.add("active");
       setTimeout(() => btn.classList.remove("active"), 900);
