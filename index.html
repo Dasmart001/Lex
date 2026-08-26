@@ -1101,6 +1101,24 @@ function deleteThread(id){
 
 function activeThread(){ return threads.find(t => t.id === activeId); }
 
+// On-screen toast — since we can't see the person's devtools console,
+// every copy/select action reports exactly what happened directly on
+// screen instead of failing silently. Temporary, but necessary right now
+// for real diagnosis instead of more guessing.
+function showToast(msg){
+  let el = document.getElementById("__toast");
+  if(!el){
+    el = document.createElement("div");
+    el.id = "__toast";
+    el.style.cssText = "position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#000;color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;font-family:'Public Sans',sans-serif;z-index:999;max-width:88vw;text-align:center;box-shadow:0 6px 20px rgba(0,0,0,.3);";
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.style.display = "block";
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.style.display = "none"; }, 3500);
+}
+
 // Robust clipboard copy: tries the modern async Clipboard API first, and
 // falls back to a hidden textarea + execCommand for contexts where
 // clipboard-write isn't permitted (sandboxed iframes, non-secure origins,
@@ -1113,10 +1131,15 @@ function copyToClipboard(text){
   // "trusted user gesture" context by then, causing the fallback to fail
   // silently too. Sandboxed/restricted contexts often allow execCommand
   // even when they block the permission-gated Clipboard API outright.
-  if(fallbackCopy(text)) return Promise.resolve(true);
+  const fb = fallbackCopy(text);
+  if(fb.ok) return Promise.resolve(true);
   if(navigator.clipboard && navigator.clipboard.writeText){
-    return navigator.clipboard.writeText(text).then(() => true).catch(() => false);
+    return navigator.clipboard.writeText(text).then(() => true).catch((err) => {
+      showToast(`Copy failed — execCommand: ${fb.reason} | Clipboard API: ${err && err.message ? err.message : err}`);
+      return false;
+    });
   }
+  showToast(`Copy failed — execCommand: ${fb.reason} | Clipboard API not available in this browser`);
   return Promise.resolve(false);
 }
 function fallbackCopy(text){
@@ -1139,11 +1162,17 @@ function fallbackCopy(text){
     ta.focus({ preventScroll: true });
     ta.select();
     ta.setSelectionRange(0, text.length);
-    const ok = document.execCommand("copy");
+    let ok = false, reason = "";
+    try{
+      ok = document.execCommand("copy");
+      reason = ok ? "succeeded" : "returned false";
+    } catch(e){
+      reason = "threw: " + e.message;
+    }
     document.body.removeChild(ta);
-    return ok;
+    return { ok, reason };
   } catch(e){
-    return false;
+    return { ok: false, reason: "setup threw: " + e.message };
   }
 }
 
@@ -1169,6 +1198,7 @@ function showCopyFallback(text){
 function copyWithFallback(text){
   return copyToClipboard(text).then(ok => {
     if(!ok) showCopyFallback(text);
+    else showToast("Copied to clipboard ✓");
     return ok;
   });
 }
@@ -1862,7 +1892,13 @@ document.getElementById("ctxCopy").addEventListener("click", () => {
   const s = activeChatSession();
   if(s && ctxTargetIndex !== null){
     const m = s.messages[ctxTargetIndex];
-    copyWithFallback(m.displayContent !== undefined ? m.displayContent : m.content);
+    if(!m){
+      showToast(`Copy failed — no message found at index ${ctxTargetIndex}`);
+    } else {
+      copyWithFallback(m.displayContent !== undefined ? m.displayContent : m.content);
+    }
+  } else {
+    showToast(`Copy failed — no active session or target (session: ${!!s}, index: ${ctxTargetIndex})`);
   }
   closeCtxMenu();
 });
@@ -1875,7 +1911,15 @@ document.getElementById("ctxSelect").addEventListener("click", () => {
     const sel = window.getSelection();
     sel.removeAllRanges();
     sel.addRange(range);
+    const selectedLen = sel.toString().length;
+    if(selectedLen === 0){
+      showToast("Select failed — range applied but 0 characters selected");
+    } else {
+      showToast(`Selected ${selectedLen} characters — now use your device's copy gesture`);
+    }
     armSelectionDismiss();
+  } else {
+    showToast(`Select failed — target element missing (el: ${!!el}, attached: ${el ? document.body.contains(el) : "n/a"})`);
   }
   closeCtxMenu();
 });
