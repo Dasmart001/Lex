@@ -221,27 +221,35 @@
   .wizard-toggle-row .t{ font-size:13.5px; }
   .wizard-toggle-row .sub{ font-size:11px; color:var(--faint); margin-top:2px; }
 
-  /* ---- drafting mode: document view ---- */
-  .draft-toolbar{ display:flex; align-items:center; justify-content:space-between; padding:12px 20px; border-bottom:1px solid var(--line-soft); flex-shrink:0; }
-  .draft-version-nav{ display:flex; align-items:center; gap:6px; font-family:'Space Mono',monospace; font-size:11.5px; color:var(--dim); }
-  .draft-toolbar-actions{ display:flex; align-items:center; gap:2px; }
-  .draft-page-wrap{ flex:1; overflow-y:auto; padding:28px 20px 20px 20px; display:flex; justify-content:center; }
-  .draft-page{
-    max-width:680px; width:100%; background:var(--bg); border:1px solid var(--line); border-radius:6px;
-    padding:40px 36px; font-size:14.5px; line-height:1.8; box-shadow:0 1px 4px rgba(0,0,0,0.04);
+  /* ---- drafting mode: inline document card within the chat ---- */
+  .doc-card{
+    margin-top:6px; max-width:min(560px, 100%); border:1px solid var(--line); border-radius:14px;
+    overflow:hidden; background:var(--bg); box-shadow:0 1px 3px rgba(0,0,0,0.04);
   }
-  .draft-page h3{ font-family:'Libre Caslon Text',serif; font-size:17px; margin:20px 0 10px 0; font-weight:700; }
-  .draft-page h3:first-child{ margin-top:0; }
-  .draft-page h4{ font-size:14.5px; margin:16px 0 8px 0; font-weight:700; }
-  .draft-page p{ margin:0 0 14px 0; }
-  .draft-page ul, .draft-page ol{ margin:0 0 14px 0; padding-left:20px; }
-  .draft-page li{ margin-bottom:6px; }
-  .draft-page strong{ font-weight:700; }
-  .draft-page-edit{
-    max-width:680px; width:100%; min-height:60vh; background:var(--bg); border:1px solid var(--ink); border-radius:6px;
-    padding:40px 36px; font-size:14.5px; line-height:1.8; font-family:'Public Sans',sans-serif; color:var(--ink); resize:vertical;
+  .doc-card-head{
+    display:flex; align-items:center; gap:8px; padding:11px 14px; border-bottom:1px solid var(--line-soft);
+    background:var(--hover);
   }
-  .draft-page-edit:focus{ outline:none; }
+  .doc-card-head svg{ color:var(--dim); flex-shrink:0; }
+  .doc-card-label{ font-size:12.5px; font-weight:600; color:var(--dim); flex:1; }
+  .doc-card-actions{ display:flex; align-items:center; gap:1px; }
+  .doc-card-actions button{
+    background:transparent; border:none; color:var(--faint); cursor:pointer; padding:6px; border-radius:7px;
+    display:flex; transition:background .12s, color .12s;
+  }
+  .doc-card-actions button:hover{ background:var(--line-soft); color:var(--ink); }
+  .doc-card-actions button.active{ color:var(--ink); background:var(--line-soft); }
+  .doc-card-body.answer{ padding:20px 22px; font-size:14px; line-height:1.75; }
+  .doc-card-notes{
+    padding:10px 14px; border-top:1px solid var(--line-soft); font-size:11.5px; color:var(--faint); line-height:1.55;
+  }
+  .doc-card-notes strong{ color:var(--dim); }
+  /* One-time "ta-da" shimmer the moment a draft finishes generating */
+  .doc-card-fresh{ animation: doc-card-glow 1.3s ease-out; }
+  @keyframes doc-card-glow{
+    0%{ box-shadow:0 0 0 2px rgba(0,0,0,0.18), 0 4px 14px rgba(0,0,0,0.10); }
+    100%{ box-shadow:0 1px 3px rgba(0,0,0,0.04); }
+  }
 
   /* ---- student mode: library home ---- */
   .library{ flex:1; overflow-y:auto; padding:6vh 20px 40px 20px; }
@@ -331,7 +339,6 @@
 
   /* ---- THREAD VIEW ---- */
   .thread-view{ flex:1; overflow-y:auto; padding:8px 24px 8px 24px; }
-  .draft-view{ flex:1; display:flex; flex-direction:column; overflow:hidden; min-height:0; }
   .thread-inner{ max-width:700px; margin:0 auto; }
 
   .msg-row{ padding:14px 0; }
@@ -749,8 +756,9 @@
     </div>
 
     <!-- DRAFTING HOME -->
-    <div class="draft-wizard" id="draftHome" style="display:none;">
-      <div class="wizard-inner">
+    <!-- DRAFTING HOME — plain chat composer, matching research mode -->
+    <div class="home" id="draftHome" style="display:none;">
+      <div class="home-inner">
         <div class="home-greeting">
           <svg width="26" height="26" viewBox="0 0 36 36" fill="currentColor" class="home-mark-icon">
             <g transform="rotate(-38 18 15)">
@@ -759,114 +767,61 @@
             </g>
             <rect x="5" y="29.5" width="15" height="4.2" rx="2.1"/>
           </svg>
-          <span class="home-title serif" id="draftGreeting">What are we drafting today?</span>
+          <span class="home-title serif">What are we drafting today?</span>
         </div>
 
-        <div class="wizard-steps">
-          <div class="wizard-step" id="wizStepInd1" data-step="1"><span class="wizard-step-num">1</span><span>Setup</span></div>
-          <div class="wizard-step-line"></div>
-          <div class="wizard-step" id="wizStepInd2" data-step="2"><span class="wizard-step-num">2</span><span>Context</span></div>
-        </div>
-
-        <!-- STEP 1 — SETUP -->
-        <div class="wizard-panel" id="wizardStep1">
-          <div class="wizard-field">
-            <label>What is this document about?</label>
-            <input type="text" id="draftTypeCustom" class="wizard-input" placeholder="e.g. Non-disclosure agreement, affidavit of loss, tenancy agreement…">
-          </div>
-          <div class="wizard-row-2">
-            <div class="wizard-field">
-              <label>Parties involved</label>
-              <input type="text" id="draftParties" class="wizard-input" placeholder="e.g. Acme Nigeria Ltd and John Doe">
-            </div>
-            <div class="wizard-field">
-              <label>Jurisdiction</label>
-              <input type="text" id="draftJurisdiction" class="wizard-input" placeholder="e.g. Lagos State, Nigeria">
-            </div>
-          </div>
-          <div class="wizard-field">
-            <label>Key terms &amp; details</label>
-            <textarea id="draftDetails" class="wizard-textarea" rows="4" placeholder="Amounts, dates, clauses, or anything specific this document needs to cover…"></textarea>
-          </div>
-          <div class="wizard-actions">
-            <button class="wizard-primary-btn" id="wizardToStep2" disabled>Continue to context →</button>
-          </div>
-        </div>
-
-        <!-- STEP 2 — CONTEXT -->
-        <div class="wizard-panel" id="wizardStep2" style="display:none;">
-          <div class="wizard-summary" id="wizardSummary"></div>
-
-          <div class="wizard-field">
-            <label>Reference document (optional)</label>
-            <div class="attach-chip-row" id="draftAttachChip"></div>
-            <button class="wizard-secondary-btn" id="draftAttachBtn" style="align-self:flex-start;">Attach a file</button>
-          </div>
-
-          <div class="wizard-field">
-            <div class="wizard-toggle-row">
-              <div><div class="t">Ground in current legal research</div><div class="sub">Search for relevant, up-to-date statutes and case law while drafting</div></div>
-              <button class="search-toggle-btn" id="draftSearchToggle" title="Toggle research">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              </button>
-            </div>
-          </div>
-
-          <div class="wizard-actions" style="justify-content:space-between;">
-            <button class="wizard-secondary-btn" id="wizardBackTo1">← Back</button>
-            <button class="wizard-primary-btn" id="draftSendBtn" disabled>Generate draft</button>
-          </div>
-          <div class="persist-disclaimer">Every draft has bracketed placeholders to fill in and needs review before use — Lex is a starting point, not a substitute for legal judgment.</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- DRAFT DOCUMENT VIEW -->
-    <div class="draft-view" id="draftView" style="display:none;">
-      <div class="draft-toolbar">
-        <div class="draft-version-nav">
-          <button class="icon-btn" id="draftVerPrev" title="Previous version">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-          </button>
-          <span id="draftVerLabel">v1</span>
-          <button class="icon-btn" id="draftVerNext" title="Next version">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-          </button>
-        </div>
-        <div class="draft-toolbar-actions">
-          <button class="icon-btn" id="draftEditBtn" title="Edit">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-          </button>
-          <button class="icon-btn" id="draftCopyBtn" title="Copy">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-          </button>
-          <button class="icon-btn" id="draftDownloadBtn" title="Download">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          </button>
-        </div>
-      </div>
-      <div class="draft-page-wrap" id="draftPageWrap">
-        <div id="draftThinkBlock" style="display:none;"></div>
-        <div class="draft-page" id="draftPage"></div>
-        <textarea class="draft-page-edit" id="draftPageEdit" style="display:none;"></textarea>
-      </div>
-    </div>
-
-    <div class="followup" id="draftFollowup" style="display:none;">
-      <div class="followup-inner">
-        <div class="composer" id="draftReviseComposer">
+        <div class="composer" id="draftHomeComposer">
+          <div class="attach-chip-row" id="draftHomeAttachChip"></div>
           <div class="composer-row">
-            <textarea id="draftReviseInput" rows="1" placeholder="Ask Lex to revise this draft…"></textarea>
+            <textarea id="draftHomeInput" rows="1" placeholder="e.g. an NDA between two Nigerian companies…"></textarea>
           </div>
           <div class="composer-foot">
+            <button class="plus-btn" id="draftHomeAttachBtn" title="Attach a reference document">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
             <span class="model-pill">Lex 1.0</span>
             <div class="composer-actions">
-              <button class="send-btn" id="draftReviseSendBtn" disabled>
+              <button class="search-toggle-btn" id="draftHomeSearchBtn" title="Ground this draft in current legal research">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              </button>
+              <button class="send-btn" id="draftHomeSendBtn" disabled>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
               </button>
             </div>
           </div>
         </div>
+        <div class="persist-disclaimer">Every draft has bracketed placeholders to fill in and needs review before use — Lex is a starting point, not a substitute for legal judgment.</div>
+      </div>
+    </div>
+
+    <!-- DRAFTING CHAT VIEW -->
+    <div class="thread-view" id="draftView" style="display:none;">
+      <div class="thread-inner" id="draftChatInner"></div>
+    </div>
+
+    <div class="followup" id="draftFollowup" style="display:none;">
+      <div class="followup-inner">
+        <div class="composer" id="draftFollowComposer">
+          <div class="attach-chip-row" id="draftFollowAttachChip"></div>
+          <div class="composer-row">
+            <textarea id="draftFollowInput" rows="1" placeholder="Ask Lex to revise this, or draft something new…"></textarea>
+          </div>
+          <div class="composer-foot">
+            <button class="plus-btn" id="draftFollowAttachBtn" title="Attach a reference document">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+            <span class="model-pill">Lex 1.0</span>
+            <div class="composer-actions">
+              <button class="search-toggle-btn" id="draftFollowSearchBtn" title="Ground this draft in current legal research">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              </button>
+              <button class="send-btn" id="draftFollowSendBtn" disabled>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="persist-disclaimer">Every draft has bracketed placeholders to fill in and needs review before use.</div>
       </div>
     </div>
 
@@ -1036,7 +991,6 @@ let activeId = null;
 let loading = false;
 let drafts = [];
 let activeDraftId = null;
-let draftEditing = false;
 let studyDecks = [];
 let activeStudyId = null;
 let studyMode = "flashcards";
@@ -1179,6 +1133,8 @@ function fallbackCopy(text){
 function showCopyFallback(text){
   const backdrop = document.getElementById("copyFallbackBackdrop");
   const ta = document.getElementById("copyFallbackText");
+  document.querySelector("#copyFallbackBackdrop .modal-head .t").textContent = "Copy text";
+  document.querySelector("#copyFallbackBackdrop p").textContent = "Automatic copy isn't available in this view. The text is pre-selected below — use your device's own Copy (long-press, or Ctrl/Cmd+C).";
   ta.value = text;
   backdrop.classList.add("show");
   setTimeout(() => {
@@ -1559,22 +1515,23 @@ function buildUserMessage(typedText){
 // rebuilding the whole thread (and re-wiring every button, and re-saving to
 // localStorage) on every single token. Falls back to a full render for the
 // very first chunk, when the row doesn't exist in the DOM yet.
-function updateStreamingMessageDOM(idx, m){
-  const wrap = document.getElementById("threadInner");
+function updateStreamingMessageDOM(containerId, idx, m){
+  const wrap = document.getElementById(containerId);
   const answerEl = wrap.querySelector(`.answer[data-index="${idx}"]`);
   if(!answerEl){
-    renderThreadInner();
+    if(containerId === "threadInner") renderThreadInner(); else renderDraftChatInner();
     return;
   }
   answerEl.innerHTML = formatAnswer(m.content) + (m.content ? '<span class="live-cursor"></span>' : '');
-  document.getElementById("threadView").scrollTop = document.getElementById("threadView").scrollHeight;
+  const scroller = document.getElementById(containerId === "threadInner" ? "threadView" : "draftView");
+  scroller.scrollTop = scroller.scrollHeight;
 }
 
-function updateStreamingThinkDOM(idx, thinkingText){
-  const wrap = document.getElementById("threadInner");
+function updateStreamingThinkDOM(containerId, idx, thinkingText){
+  const wrap = document.getElementById(containerId);
   const block = wrap.querySelector(`.think-block[data-index="${idx}"]`);
   if(!block){
-    renderThreadInner();
+    if(containerId === "threadInner") renderThreadInner(); else renderDraftChatInner();
     return;
   }
   const body = block.querySelector(".think-body");
@@ -1582,19 +1539,20 @@ function updateStreamingThinkDOM(idx, thinkingText){
     body.innerHTML = formatAnswer(thinkingText);
     body.scrollTop = body.scrollHeight;
   }
-  document.getElementById("threadView").scrollTop = document.getElementById("threadView").scrollHeight;
+  const scroller = document.getElementById(containerId === "threadInner" ? "threadView" : "draftView");
+  scroller.scrollTop = scroller.scrollHeight;
 }
 
-function updateStreamingTimerDOM(idx, startedAt){
-  const wrap = document.getElementById("threadInner");
+function updateStreamingTimerDOM(containerId, idx, startedAt){
+  const wrap = document.getElementById(containerId);
   const block = wrap.querySelector(`.think-block[data-index="${idx}"]`);
   if(!block) return;
   const timerEl = block.querySelector(".think-timer");
   if(timerEl) timerEl.textContent = elapsedSeconds(startedAt) + "s";
 }
 
-function finalizeStreamingThinkDOM(idx, seconds){
-  const wrap = document.getElementById("threadInner");
+function finalizeStreamingThinkDOM(containerId, idx, seconds){
+  const wrap = document.getElementById(containerId);
   const block = wrap.querySelector(`.think-block[data-index="${idx}"]`);
   if(!block) return;
   block.classList.remove("think-live", "open");
@@ -1611,19 +1569,19 @@ async function runResearchStream(t, usedSearch){
   t.messages.push(placeholder);
   const idx = t.messages.length - 1;
   renderThreadInner();
-  beginThinkTimer(() => updateStreamingTimerDOM(idx, startedAt));
+  beginThinkTimer(() => updateStreamingTimerDOM("threadInner", idx, startedAt));
 
   try{
     const reply = await callClaudeStream(contextMessages, undefined, usedSearch,
-      (chunk, full) => { placeholder.thinking = full; updateStreamingThinkDOM(idx, full); },
+      (chunk, full) => { placeholder.thinking = full; updateStreamingThinkDOM("threadInner", idx, full); },
       (chunk, full) => {
         if(!placeholder.content && full){
           endThinkTimer();
           placeholder.thinkSeconds = elapsedSeconds(startedAt);
-          finalizeStreamingThinkDOM(idx, placeholder.thinkSeconds);
+          finalizeStreamingThinkDOM("threadInner", idx, placeholder.thinkSeconds);
         }
         placeholder.content = full;
-        updateStreamingMessageDOM(idx, placeholder);
+        updateStreamingMessageDOM("threadInner", idx, placeholder);
       }
     );
     endThinkTimer();
@@ -1673,6 +1631,22 @@ function activeChatSession(){
       regenerate: async (msgs) => {
         const reply = await callClaude(msgs, TUTOR_SYSTEM_PROMPT);
         return { role: "assistant", content: reply.text };
+      },
+      save: saveThreads
+    };
+  }
+  if(currentMode === "drafting"){
+    const d = activeDraft();
+    if(!d) return null;
+    return {
+      messages: d.messages,
+      render: renderDraftChatInner,
+      inputId: "draftFollowInput",
+      updateSendState: updateDraftChatSendState,
+      regenerate: async (msgs) => {
+        const reply = await callClaude(msgs, DRAFTING_SYSTEM_PROMPT);
+        const { doc, notes } = parseDraftResponse(reply.text);
+        return { role: "assistant", content: doc, notes, thinking: reply.thinking, isDraft: true };
       },
       save: saveThreads
     };
@@ -1904,50 +1878,35 @@ document.getElementById("ctxCopy").addEventListener("click", () => {
 });
 
 document.getElementById("ctxSelect").addEventListener("click", () => {
-  const el = ctxTargetEl;
-  if(el && document.body.contains(el)){
-    const range = document.createRange();
-    range.selectNodeContents(el);
-    const sel = window.getSelection();
-    sel.removeAllRanges();
-    sel.addRange(range);
-    const selectedLen = sel.toString().length;
-    if(selectedLen === 0){
-      showToast("Select failed — range applied but 0 characters selected");
-    } else {
-      showToast(`Selected ${selectedLen} characters — now use your device's copy gesture`);
+  const s = activeChatSession();
+  if(s && ctxTargetIndex !== null){
+    const m = s.messages[ctxTargetIndex];
+    if(m){
+      const text = m.displayContent !== undefined ? m.displayContent : m.content;
+      showSelectTextModal(text);
     }
-    armSelectionDismiss();
-  } else {
-    showToast(`Select failed — target element missing (el: ${!!el}, attached: ${el ? document.body.contains(el) : "n/a"})`);
   }
   closeCtxMenu();
 });
 
-// Tapping anywhere else after "Select text" clears the selection —
-// matches how text selection normally gets dismissed on mobile.
-let selectionDismissArmed = false;
-function armSelectionDismiss(){
-  if(selectionDismissArmed) return;
-  selectionDismissArmed = true;
-  const clear = (e) => {
-    // Ignore the very tap that produced the selection, and don't clear
-    // if the person is still actively selecting/dragging a handle.
-    const sel = window.getSelection();
-    if(sel && !sel.isCollapsed){
-      sel.removeAllRanges();
-    }
-    selectionDismissArmed = false;
-    document.removeEventListener("touchstart", clear, true);
-    document.removeEventListener("mousedown", clear, true);
-  };
-  // Defer binding well past the tap that triggered selection (and any
-  // trailing ghost touch/mouse events the same gesture might still
-  // generate) so it can't immediately clear the selection it just made.
+// Opens the message text in a real, plain <textarea>. This matters:
+// mobile browsers reliably show native selection handles + the OS's own
+// copy bubble on a genuine form control, but often refuse to show that
+// same native UI for a programmatic Selection/Range on arbitrary rendered
+// HTML (rich text with nested tags). This is the same pattern ChatGPT's
+// own "Select text" uses — a dedicated view with plain selectable text.
+function showSelectTextModal(text){
+  const backdrop = document.getElementById("copyFallbackBackdrop");
+  const ta = document.getElementById("copyFallbackText");
+  document.querySelector("#copyFallbackBackdrop .modal-head .t").textContent = "Select text";
+  document.querySelector("#copyFallbackBackdrop p").textContent = "Drag to select any portion, then use your device's Copy option — or just select all and copy.";
+  ta.value = text;
+  backdrop.classList.add("show");
   setTimeout(() => {
-    document.addEventListener("touchstart", clear, true);
-    document.addEventListener("mousedown", clear, true);
-  }, 400);
+    ta.focus();
+    ta.select();
+    ta.setSelectionRange(0, text.length);
+  }, 60);
 }
 
 document.getElementById("ctxEdit").addEventListener("click", () => {
@@ -2220,7 +2179,7 @@ voiceMicBtn.addEventListener("click", () => {
 
 /* ==================== DRAFTING MODE ==================== */
 
-const DRAFTING_SYSTEM_PROMPT = `You are LexAI's document drafting engine, generating professional legal documents for Nigerian legal practice (with general applicability elsewhere).
+const DRAFTING_SYSTEM_PROMPT = `You are LexAI's document drafting engine, generating professional legal documents for Nigerian legal practice (with general applicability elsewhere), inside a normal back-and-forth chat.
 
 Rules:
 - Output ONLY the document itself first — no greeting, no "Here's your draft", no closing remarks mixed into the body.
@@ -2229,83 +2188,12 @@ Rules:
 - Match the formality and structure expected of the document type requested.
 - Never fabricate case citations or statutory references within a document; if uncertain, use a placeholder like [RELEVANT STATUTE REFERENCE] instead.
 - After the complete document, add a line containing exactly ---NOTES--- followed by a short list of the placeholders used and any important assumptions or considerations. Keep notes concise.
-- If revising an existing draft based on a follow-up instruction, apply the requested changes while preserving the rest of the document, and output the FULL revised document again in the same format (document, then ---NOTES---, then notes).
-- If a reference document is attached, use it as a model for structure, tone, and clause style where appropriate, and pull in any concrete facts it contains (names, dates, amounts) instead of placeholders — but still flag in the notes anything you carried over from the reference that the user should double-check.`;
-
-/* ---- setup wizard state ---- */
-let draftWizard = { step: 1, useResearch: false };
-
-function resetDraftWizard(){
-  draftWizard = { step: 1, useResearch: false };
-  document.getElementById("draftTypeCustom").value = "";
-  document.getElementById("draftParties").value = "";
-  document.getElementById("draftJurisdiction").value = "";
-  document.getElementById("draftDetails").value = "";
-  document.getElementById("draftSearchToggle").classList.remove("active");
-  clearAttachment();
-  goWizardStep(1);
-  updateWizardStep1State();
-}
-
-function goWizardStep(n){
-  draftWizard.step = n;
-  document.getElementById("wizardStep1").style.display = n === 1 ? "flex" : "none";
-  document.getElementById("wizardStep2").style.display = n === 2 ? "flex" : "none";
-  document.getElementById("wizStepInd1").classList.toggle("active", n === 1);
-  document.getElementById("wizStepInd1").classList.toggle("done", n > 1);
-  document.getElementById("wizStepInd2").classList.toggle("active", n === 2);
-  if(n === 2) renderWizardSummary();
-}
-
-function updateWizardStep1State(){
-  const hasAbout = document.getElementById("draftTypeCustom").value.trim();
-  const hasDetails = document.getElementById("draftDetails").value.trim();
-  document.getElementById("wizardToStep2").disabled = !(hasAbout || hasDetails);
-}
-
-function renderWizardSummary(){
-  const about = document.getElementById("draftTypeCustom").value.trim();
-  const parties = document.getElementById("draftParties").value.trim();
-  const jurisdiction = document.getElementById("draftJurisdiction").value.trim();
-  const details = document.getElementById("draftDetails").value.trim();
-  const el = document.getElementById("wizardSummary");
-  const rows = [];
-  if(about) rows.push(`<div><b>About:</b> ${escapeHtml(about)}</div>`);
-  if(parties) rows.push(`<div><b>Parties:</b> ${escapeHtml(parties)}</div>`);
-  if(jurisdiction) rows.push(`<div><b>Jurisdiction:</b> ${escapeHtml(jurisdiction)}</div>`);
-  if(details) rows.push(`<div><b>Details:</b> ${escapeHtml(details.slice(0,140))}${details.length > 140 ? "…" : ""}</div>`);
-  el.innerHTML = rows.length ? rows.join("") : `<span class="wizard-summary-empty">Nothing entered yet — go back to Setup.</span>`;
-}
-
-function buildDraftPrompt(){
-  const about = document.getElementById("draftTypeCustom").value.trim() || "a legal document";
-  const parties = document.getElementById("draftParties").value.trim();
-  const jurisdiction = document.getElementById("draftJurisdiction").value.trim();
-  const details = document.getElementById("draftDetails").value.trim();
-  let lines = [`Draft the following: ${about}.`];
-  if(parties) lines.push(`Parties involved: ${parties}.`);
-  if(jurisdiction) lines.push(`Jurisdiction: ${jurisdiction}.`);
-  if(details) lines.push(`Key terms and details: ${details}`);
-  return lines.join("\n");
-}
-
-function draftTitleFromWizard(){
-  const about = document.getElementById("draftTypeCustom").value.trim() || "New draft";
-  const parties = document.getElementById("draftParties").value.trim();
-  return parties ? `${about} — ${parties}` : about;
-}
-
-document.getElementById("draftTypeCustom").addEventListener("input", updateWizardStep1State);
-document.getElementById("draftDetails").addEventListener("input", updateWizardStep1State);
-document.getElementById("wizardToStep2").addEventListener("click", () => goWizardStep(2));
-document.getElementById("wizardBackTo1").addEventListener("click", () => goWizardStep(1));
-document.getElementById("draftSearchToggle").addEventListener("click", () => {
-  draftWizard.useResearch = !draftWizard.useResearch;
-  document.getElementById("draftSearchToggle").classList.toggle("active", draftWizard.useResearch);
-});
+- The conversation history may include earlier drafts and revision requests. When the person asks for a change, apply it while preserving the rest of the document, and output the FULL revised document again in the same format (document, then ---NOTES---, then notes) — never a partial diff or just the changed clause.
+- If a reference document is attached, use it as a model for structure, tone, and clause style where appropriate, and pull in any concrete facts it contains (names, dates, amounts) instead of placeholders — but still flag in the notes anything you carried over from the reference that the user should double-check.
+- If the person is just asking a question about the draft (not requesting a change), answer conversationally and do not repeat the whole document.`;
 
 function newDraft(){
-  const d = { id: uid(), title: "New draft", versions: [], currentVersionIdx: -1, notes: "" };
+  const d = { id: uid(), title: "New draft", messages: [] };
   drafts.unshift(d);
   activeDraftId = d.id;
   saveThreads();
@@ -2351,7 +2239,10 @@ function showDraftHome(){
   document.getElementById("draftFollowup").style.display = "none";
   document.getElementById("threadTitle").textContent = "";
   activeDraftId = null;
-  resetDraftWizard();
+  document.getElementById("draftHomeInput").value = "";
+  clearAttachment();
+  document.getElementById("draftHomeSearchBtn").classList.toggle("active", searchEnabled);
+  updateDraftChatSendState();
   renderDraftList();
 }
 
@@ -2362,244 +2253,207 @@ function showDraftView(){
   document.getElementById("draftView").style.display = "flex";
   document.getElementById("draftFollowup").style.display = "block";
   document.getElementById("threadTitle").textContent = d.title;
-  draftEditing = false;
-  renderDraftView();
+  renderDraftChatInner();
   renderDraftList();
 }
 
-let draftStreaming = false;
-
-function renderDraftView(){
+// Renders the drafting conversation exactly like research/tutor chat —
+// user requests as bubbles, Lex's replies as messages. When a reply is a
+// generated document, it renders as a "document card" inline in the flow
+// (with its own Copy/Download), with Extended Thinking above it just like
+// the rest of the app.
+function renderDraftChatInner(){
   const d = activeDraft();
+  const wrap = document.getElementById("draftChatInner");
+  wrap.innerHTML = "";
   if(!d) return;
-  const page = document.getElementById("draftPage");
-  const editEl = document.getElementById("draftPageEdit");
-  const verLabel = document.getElementById("draftVerLabel");
-  const prevBtn = document.getElementById("draftVerPrev");
-  const nextBtn = document.getElementById("draftVerNext");
-  const stepsHolder = document.getElementById("draftThinkBlock");
 
-  page.style.display = draftEditing ? "none" : "block";
-  editEl.style.display = draftEditing ? "block" : "none";
+  d.messages.forEach((m, i) => {
+    const row = document.createElement("div");
+    if(m.role === "user"){
+      row.className = "msg-row user";
+      row.innerHTML = `
+        <div class="user-bubble" data-index="${i}">${m.attachmentName ? `<div class="msg-attach-chip"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>${escapeHtml(m.attachmentName)}</span></div>` : ""}${escapeHtml(m.displayContent !== undefined ? m.displayContent : m.content)}</div>
+        <div class="user-actions" data-index="${i}">
+          <button class="uact-retry" title="Retry"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12a9 9 0 1 1-3-6.7"/><polyline points="21 3 21 9 15 9"/></svg></button>
+          <button class="uact-edit" title="Edit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></button>
+          <button class="uact-copy" title="Copy"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+        </div>`;
+    } else {
+      row.className = "msg-row assistant";
+      let inner = `<div class="assistant-label"><svg width="13" height="13" viewBox="0 0 36 36" fill="currentColor" class="assistant-mark"><g transform="rotate(-38 18 15)"><rect x="9" y="4" width="17" height="8" rx="2.6"/><rect x="14.7" y="12" width="5.6" height="17" rx="2.6"/></g><rect x="5" y="29.5" width="15" height="4.2" rx="2.1"/></svg><span class="assistant-name">LexAI</span></div>`;
+      if(m.streaming || m.thinking){
+        inner += renderThinkBlockHtml(i, m.thinking, !!m.streaming, m.thinkSeconds);
+      }
+      if(m.isError){
+        inner += `<div class="answer error" data-index="${i}">${formatAnswer(m.content)}</div>`;
+      } else if(m.isDraft){
+        inner += `
+          <div class="doc-card${m.justFinished ? " doc-card-fresh" : ""}" data-index="${i}">
+            <div class="doc-card-head">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              <span class="doc-card-label">Draft</span>
+              <div class="doc-card-actions">
+                <button class="doc-card-copy" title="Copy document"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                <button class="doc-card-download" title="Download document"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+              </div>
+            </div>
+            <div class="doc-card-body answer" data-index="${i}">${formatAnswer(m.content)}${m.streaming && m.content ? '<span class="live-cursor"></span>' : ''}</div>
+            ${m.notes ? `<div class="doc-card-notes"><strong>Notes:</strong> ${escapeHtml(m.notes)}</div>` : ""}
+          </div>`;
+      } else {
+        inner += `<div class="answer" data-index="${i}">${formatAnswer(m.content)}${m.streaming && m.content ? '<span class="live-cursor"></span>' : ''}</div>`;
+      }
+      if(!m.isError && !m.streaming){
+        inner += `
+          <div class="msg-actions" data-index="${i}">
+            <button class="act-copy" title="Copy"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+            <button class="act-read" title="Read aloud"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polygon points="4 8 8 8 12 4 12 20 8 16 4 16 4 8"/><path d="M16 9a4 4 0 0 1 0 6"/></svg></button>
+            <button class="act-up" title="Good response"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 11v10H4a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1zM7 11l4-8a2 2 0 0 1 4 1.5V9h5.5a2 2 0 0 1 2 2.3l-1.2 8A2 2 0 0 1 19.3 21H10a3 3 0 0 1-3-3"/></svg></button>
+            <button class="act-down" title="Poor response"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 13V3h3a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1zM17 13l-4 8a2 2 0 0 1-4-1.5V15H3.5a2 2 0 0 1-2-2.3l1.2-8A2 2 0 0 1 4.7 3H14a3 3 0 0 1 3 3"/></svg></button>
+            <button class="act-regen" title="Regenerate"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12a9 9 0 1 1-3-6.7"/><polyline points="21 3 21 9 15 9"/></svg></button>
+          </div>`;
+      }
+      row.innerHTML = inner;
+    }
+    wrap.appendChild(row);
+  });
 
-  // While actively streaming, the plan/step-tracking functions below are
-  // driving the DOM directly — leave it alone here.
-  if(draftStreaming) return;
+  wireMessageActions(wrap);
+  wireUserActions(wrap);
+  wireLongPress(wrap);
+  wireThinkBlock(wrap);
+  wireDocCards(wrap);
 
-  if(loading && d.versions.length === 0){
-    stepsHolder.style.display = "none";
-    page.innerHTML = `<div class="thinking-row"><div class="gavel-loader"><svg viewBox="0 0 36 36" fill="currentColor"><g transform="rotate(-32 18 15)"><rect x="9" y="4" width="17" height="8" rx="2.6"/><rect x="14.7" y="12" width="5.6" height="17" rx="2.6"/></g><rect x="5" y="29.5" width="15" height="4.2" rx="2.1"/></svg></div><div class="thinking-label">Drafting…</div></div>`;
-    verLabel.textContent = "";
-    prevBtn.disabled = true;
-    nextBtn.disabled = true;
-    return;
+  const lastMsg = d.messages[d.messages.length - 1];
+  if(loading && !(lastMsg && lastMsg.role === "assistant" && lastMsg.streaming)){
+    const row = document.createElement("div");
+    row.className = "thinking-row";
+    row.innerHTML = `<div class="gavel-loader"><svg viewBox="0 0 36 36" fill="currentColor"><g transform="rotate(-32 18 15)"><rect x="9" y="4" width="17" height="8" rx="2.6"/><rect x="14.7" y="12" width="5.6" height="17" rx="2.6"/></g><rect x="5" y="29.5" width="15" height="4.2" rx="2.1"/></svg></div><div class="thinking-label">Thinking…</div>`;
+    wrap.appendChild(row);
   }
-
-  const v = d.versions[d.currentVersionIdx];
-  if(!v) return;
-  page.innerHTML = formatAnswer(v.content);
-  verLabel.textContent = `v${d.currentVersionIdx + 1} of ${d.versions.length}${loading ? " — revising…" : ""}`;
-  prevBtn.disabled = d.currentVersionIdx <= 0;
-  nextBtn.disabled = d.currentVersionIdx >= d.versions.length - 1;
-
-  // Show the real reasoning Lex produced for the *current* version,
-  // collapsed by default — tap to expand and read it, just like Claude's
-  // Extended Thinking.
-  if(d.thinking && d.currentVersionIdx === d.versions.length - 1){
-    stepsHolder.style.display = "block";
-    stepsHolder.innerHTML = renderThinkBlockHtml("draft", d.thinking, false, d.thinkSeconds);
-    wireThinkBlock(stepsHolder);
-  } else {
-    stepsHolder.style.display = "none";
-  }
+  document.getElementById("draftView").scrollTop = document.getElementById("draftView").scrollHeight;
+  saveThreads();
 }
 
-let draftThinkStartedAt = null;
-
-function startDraftThinking(){
-  document.getElementById("draftPage").style.display = "block";
-  document.getElementById("draftPageEdit").style.display = "none";
-  document.getElementById("draftVerLabel").textContent = "Drafting…";
-  document.getElementById("draftVerPrev").disabled = true;
-  document.getElementById("draftVerNext").disabled = true;
-  document.getElementById("draftPage").innerHTML = "";
-  draftThinkStartedAt = Date.now();
-  const holder = document.getElementById("draftThinkBlock");
-  holder.style.display = "block";
-  holder.innerHTML = renderThinkBlockHtml("draft", "", true, 0);
-  wireThinkBlock(holder);
-  beginThinkTimer(() => {
-    const timerEl = holder.querySelector(".think-timer");
-    if(timerEl) timerEl.textContent = elapsedSeconds(draftThinkStartedAt) + "s";
+function wireDocCards(container){
+  container.querySelectorAll(".doc-card").forEach(card => {
+    const idx = parseInt(card.dataset.index, 10);
+    const d = activeDraft();
+    if(!d) return;
+    const m = d.messages[idx];
+    if(!m) return;
+    const copyBtn = card.querySelector(".doc-card-copy");
+    if(copyBtn){
+      copyBtn.addEventListener("click", () => {
+        copyWithFallback(m.content).then(ok => {
+          if(ok){ copyBtn.classList.add("active"); setTimeout(() => copyBtn.classList.remove("active"), 900); }
+        });
+      });
+    }
+    const dlBtn = card.querySelector(".doc-card-download");
+    if(dlBtn){
+      dlBtn.addEventListener("click", () => {
+        const blob = new Blob([m.content], { type: "text/plain" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = (d.title || "draft").replace(/[^a-z0-9\-_ ]/gi, "").trim().slice(0, 60) + ".txt";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      });
+    }
   });
 }
 
-function updateDraftThinking(fullThinking){
-  const holder = document.getElementById("draftThinkBlock");
-  const body = holder.querySelector(".think-body");
-  if(body){ body.innerHTML = formatAnswer(fullThinking); body.scrollTop = body.scrollHeight; }
-}
+async function runDraftStream(d, usedResearch){
+  const contextMessages = d.messages.slice();
+  const startedAt = Date.now();
+  const placeholder = { role: "assistant", content: "", thinking: "", streaming: true, isDraft: true, thinkStartedAt: startedAt };
+  d.messages.push(placeholder);
+  const idx = d.messages.length - 1;
+  renderDraftChatInner();
+  beginThinkTimer(() => updateStreamingTimerDOM("draftChatInner", idx, startedAt));
 
-function finishDraftThinking(){
-  endThinkTimer();
-  const seconds = elapsedSeconds(draftThinkStartedAt);
-  const holder = document.getElementById("draftThinkBlock");
-  const block = holder.querySelector(".think-block");
-  if(block){
-    block.classList.remove("think-live", "open");
-    const label = block.querySelector(".think-toggle-label");
-    if(label) label.textContent = `Thought for ${seconds}s`;
-    const dot = block.querySelector(".think-live-dot"); if(dot) dot.remove();
-    const timer = block.querySelector(".think-timer"); if(timer) timer.remove();
+  try{
+    const reply = await callClaudeStream(contextMessages, DRAFTING_SYSTEM_PROMPT, usedResearch,
+      (chunk, full) => { placeholder.thinking = full; updateStreamingThinkDOM("draftChatInner", idx, full); },
+      (chunk, full) => {
+        if(!placeholder.content && full){
+          endThinkTimer();
+          placeholder.thinkSeconds = elapsedSeconds(startedAt);
+          finalizeStreamingThinkDOM("draftChatInner", idx, placeholder.thinkSeconds);
+        }
+        placeholder.content = full.split("---NOTES---")[0];
+        updateStreamingMessageDOM("draftChatInner", idx, placeholder);
+      }
+    );
+    endThinkTimer();
+    const { doc, notes } = parseDraftResponse(reply.text);
+    placeholder.content = doc;
+    placeholder.notes = notes;
+    placeholder.thinking = reply.thinking;
+    placeholder.thinkSeconds = placeholder.thinkSeconds || elapsedSeconds(startedAt);
+    placeholder.justFinished = true;
+    delete placeholder.streaming;
+  } catch(e){
+    endThinkTimer();
+    d.messages[idx] = { role: "assistant", content: "Something went wrong generating this. Please try again.", isError: true };
+  } finally {
+    loading = false;
+    renderDraftChatInner();
+    renderDraftList();
+    saveThreads();
+    setTimeout(() => { placeholder.justFinished = false; }, 1400);
   }
-  return seconds;
 }
 
-function updateDraftLiveText(fullText){
-  const visible = fullText.split("---NOTES---")[0];
-  document.getElementById("draftPage").innerHTML = formatAnswer(visible) + `<span class="live-cursor"></span>`;
-}
-
-async function generateDraft(){
+async function sendDraftMessage(text){
+  const content = text.trim();
+  if(!content && !pendingAttachment) return;
   if(loading) return;
-  const text = buildDraftPrompt();
-  const d = newDraft();
+  let d = activeDraft();
+  const isFirst = !d;
+  if(!d) d = newDraft();
   const msg = buildUserMessage(text);
-  d.title = msg.attachmentName ? `📎 ${msg.attachmentName}` : draftTitleFromWizard();
-  const usedResearch = draftWizard.useResearch;
+  if(d.messages.length === 0){
+    d.title = msg.attachmentName ? `📎 ${msg.attachmentName}` : content.slice(0, 46) + (content.length > 46 ? "…" : "");
+  }
+  d.messages.push(msg);
+  const usedResearch = searchEnabled;
   clearAttachment();
   showDraftView();
   loading = true;
-  draftStreaming = true;
-  startDraftThinking();
+  if(isFirst){ document.getElementById("draftHomeInput").value = ""; }
+  document.getElementById("draftFollowInput").value = "";
+  updateDraftChatSendState();
+  renderDraftChatInner();
 
-  let thinkFinished = false;
-
-  try{
-    const reply = await callClaudeStream([msg], DRAFTING_SYSTEM_PROMPT, usedResearch,
-      (chunk, full) => updateDraftThinking(full),
-      (chunk, full) => {
-        if(!thinkFinished){ thinkFinished = true; d.thinkSeconds = finishDraftThinking(); }
-        updateDraftLiveText(full);
-      }
-    );
-    if(!thinkFinished) d.thinkSeconds = finishDraftThinking();
-    const { doc, notes } = parseDraftResponse(reply.text);
-    d.versions.push({ content: doc, createdAt: Date.now() });
-    d.currentVersionIdx = 0;
-    d.notes = notes;
-    d.thinking = reply.thinking;
-  } catch(e){
-    endThinkTimer();
-    d.versions.push({ content: "Something went wrong generating this draft. Please try again.", createdAt: Date.now() });
-    d.currentVersionIdx = 0;
-  } finally {
-    loading = false;
-    draftStreaming = false;
-    renderDraftView();
-    renderDraftList();
-    saveThreads();
-  }
+  await runDraftStream(d, usedResearch);
 }
 
-async function reviseDraft(text){
-  const d = activeDraft();
-  const content = text.trim();
-  if(!content || loading || !d || d.versions.length === 0) return;
-  loading = true;
-  renderDraftView();
-  document.getElementById("draftReviseInput").value = "";
-  updateDraftSendState();
-
-  const currentDoc = d.versions[d.currentVersionIdx].content;
-  const message = `Here is the current draft:\n\n${currentDoc}\n\nRevision requested: ${content}\n\nOutput the full revised document (same format as before: document, then ---NOTES---, then notes).`;
-
-  try{
-    const reply = await callClaude([{ role: "user", content: message }], DRAFTING_SYSTEM_PROMPT);
-    const { doc, notes } = parseDraftResponse(reply.text);
-    d.versions.push({ content: doc, createdAt: Date.now() });
-    d.currentVersionIdx = d.versions.length - 1;
-    d.notes = notes;
-  } catch(e){
-    d.notes = "Something went wrong revising this draft. Please try again.";
-  } finally {
-    loading = false;
-    renderDraftView();
-    saveThreads();
-  }
+function updateDraftChatSendState(){
+  const homeBtn = document.getElementById("draftHomeSendBtn");
+  const followBtn = document.getElementById("draftFollowSendBtn");
+  if(homeBtn) homeBtn.disabled = (!document.getElementById("draftHomeInput").value.trim() && !pendingAttachment) || loading;
+  if(followBtn) followBtn.disabled = (!document.getElementById("draftFollowInput").value.trim() && !pendingAttachment) || loading;
 }
 
-function updateDraftSendState(){
-  document.getElementById("draftSendBtn").disabled = loading;
-  document.getElementById("draftReviseSendBtn").disabled = !document.getElementById("draftReviseInput").value.trim() || loading;
-}
+const draftHomeInput = document.getElementById("draftHomeInput");
+draftHomeInput.addEventListener("input", () => { autoGrow(draftHomeInput); updateDraftChatSendState(); });
+draftHomeInput.addEventListener("keydown", e => { if(e.key === "Enter" && !e.shiftKey){ e.preventDefault(); sendDraftMessage(draftHomeInput.value); } });
+document.getElementById("draftHomeSendBtn").addEventListener("click", () => sendDraftMessage(draftHomeInput.value));
+document.getElementById("draftHomeAttachBtn").addEventListener("click", () => fileInput.click());
+document.getElementById("draftHomeSearchBtn").addEventListener("click", toggleSearch);
 
-document.getElementById("draftSendBtn").addEventListener("click", () => generateDraft());
-
-const draftReviseInput = document.getElementById("draftReviseInput");
-draftReviseInput.addEventListener("input", () => { autoGrow(draftReviseInput); updateDraftSendState(); });
-draftReviseInput.addEventListener("keydown", e => { if(e.key === "Enter" && !e.shiftKey){ e.preventDefault(); reviseDraft(draftReviseInput.value); } });
-document.getElementById("draftReviseSendBtn").addEventListener("click", () => reviseDraft(draftReviseInput.value));
-
-document.getElementById("draftVerPrev").addEventListener("click", () => {
-  const d = activeDraft();
-  if(!d || d.currentVersionIdx <= 0) return;
-  d.currentVersionIdx--;
-  renderDraftView();
-});
-document.getElementById("draftVerNext").addEventListener("click", () => {
-  const d = activeDraft();
-  if(!d || d.currentVersionIdx >= d.versions.length - 1) return;
-  d.currentVersionIdx++;
-  renderDraftView();
-});
-
-document.getElementById("draftEditBtn").addEventListener("click", () => {
-  const d = activeDraft();
-  if(!d || d.versions.length === 0) return;
-  const editEl = document.getElementById("draftPageEdit");
-  if(!draftEditing){
-    editEl.value = d.versions[d.currentVersionIdx].content;
-    draftEditing = true;
-    renderDraftView();
-    editEl.focus();
-  } else {
-    const newContent = editEl.value;
-    if(newContent !== d.versions[d.currentVersionIdx].content){
-      d.versions.push({ content: newContent, createdAt: Date.now() });
-      d.currentVersionIdx = d.versions.length - 1;
-      saveThreads();
-    }
-    draftEditing = false;
-    renderDraftView();
-  }
-});
-
-document.getElementById("draftCopyBtn").addEventListener("click", () => {
-  const d = activeDraft();
-  if(!d || !d.versions[d.currentVersionIdx]) return;
-  const btn = document.getElementById("draftCopyBtn");
-  copyWithFallback(d.versions[d.currentVersionIdx].content).then(ok => {
-    if(ok){
-      btn.classList.add("active");
-      setTimeout(() => btn.classList.remove("active"), 900);
-    }
-  });
-});
-
-document.getElementById("draftDownloadBtn").addEventListener("click", () => {
-  const d = activeDraft();
-  if(!d || !d.versions[d.currentVersionIdx]) return;
-  const blob = new Blob([d.versions[d.currentVersionIdx].content], { type: "text/plain" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = (d.title || "draft").replace(/[^\w\- ]/g, "").trim() + ".txt";
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-});
+const draftFollowInput = document.getElementById("draftFollowInput");
+draftFollowInput.addEventListener("input", () => { autoGrow(draftFollowInput); updateDraftChatSendState(); });
+draftFollowInput.addEventListener("keydown", e => { if(e.key === "Enter" && !e.shiftKey){ e.preventDefault(); sendDraftMessage(draftFollowInput.value); } });
+document.getElementById("draftFollowSendBtn").addEventListener("click", () => sendDraftMessage(draftFollowInput.value));
+document.getElementById("draftFollowAttachBtn").addEventListener("click", () => fileInput.click());
+document.getElementById("draftFollowSearchBtn").addEventListener("click", toggleSearch);
 
 function switchMode(mode){
   currentMode = mode;
@@ -3230,7 +3084,7 @@ async function handleFileAttach(file){
     }
     renderAttachmentChip();
     updateSendStates();
-    updateDraftSendState();
+    updateDraftChatSendState();
   } catch(e){
     alert("Couldn't read that file. Please try again.");
   }
@@ -3250,16 +3104,16 @@ function renderAttachmentChip(){
     </div>` : "";
   document.getElementById("homeAttachChip").innerHTML = html;
   document.getElementById("followAttachChip").innerHTML = html;
-  document.getElementById("draftAttachChip").innerHTML = html;
+  document.getElementById("draftHomeAttachChip").innerHTML = html;
+  document.getElementById("draftFollowAttachChip").innerHTML = html;
   document.querySelectorAll(".attach-chip-remove").forEach(btn => {
-    btn.addEventListener("click", () => { clearAttachment(); updateSendStates(); updateDraftSendState(); });
+    btn.addEventListener("click", () => { clearAttachment(); updateSendStates(); updateDraftChatSendState(); });
   });
 }
 
 const fileInput = document.getElementById("fileInput");
 document.getElementById("homeAttachBtn").addEventListener("click", () => fileInput.click());
 document.getElementById("followAttachBtn").addEventListener("click", () => fileInput.click());
-document.getElementById("draftAttachBtn").addEventListener("click", () => fileInput.click());
 fileInput.addEventListener("change", async (e) => {
   const file = e.target.files[0];
   if(file) await handleFileAttach(file);
@@ -3270,6 +3124,8 @@ function toggleSearch(){
   searchEnabled = !searchEnabled;
   document.getElementById("homeSearchBtn").classList.toggle("active", searchEnabled);
   document.getElementById("followSearchBtn").classList.toggle("active", searchEnabled);
+  document.getElementById("draftHomeSearchBtn").classList.toggle("active", searchEnabled);
+  document.getElementById("draftFollowSearchBtn").classList.toggle("active", searchEnabled);
 }
 document.getElementById("homeSearchBtn").addEventListener("click", toggleSearch);
 document.getElementById("followSearchBtn").addEventListener("click", toggleSearch);
