@@ -262,6 +262,7 @@
     gap:11px; transition:border-color .12s, background .12s; position:relative; background:var(--bg);
   }
   .deck-card:hover{ border-color:var(--ink); background:var(--hover); }
+  .deck-card-fresh{ animation: doc-card-glow 1.3s ease-out; }
   .deck-card-top{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
   .deck-type-badge{ font-family:'Space Mono',monospace; font-size:9.5px; color:var(--dim); border:1px solid var(--line); border-radius:4px; padding:2px 6px; text-transform:uppercase; letter-spacing:.03em; flex-shrink:0; }
   .deck-card-title{ font-family:'Libre Caslon Text',serif; font-size:14.5px; line-height:1.4; }
@@ -278,6 +279,7 @@
 
   /* ---- student mode: study session ---- */
   .study-view{ flex:1; display:flex; flex-direction:column; align-items:center; padding:20px 20px 30px 20px; overflow-y:auto; }
+  .study-think-holder{ width:100%; max-width:420px; }
   .study-progress{
     width:100%; max-width:520px; display:flex; justify-content:space-between; font-family:'Space Mono',monospace;
     font-size:11px; color:var(--faint); margin-bottom:10px;
@@ -906,6 +908,7 @@
 
     <!-- FLASHCARD VIEW -->
     <div class="study-view" id="flashcardView" style="display:none;">
+      <div id="fcThinkBlock" class="study-think-holder" style="display:none;"></div>
       <div class="study-progress">
         <span id="fcProgressLabel">Card 1 of 10</span>
         <span id="fcKnownLabel">0 known</span>
@@ -928,6 +931,7 @@
 
     <!-- QUIZ VIEW -->
     <div class="study-view" id="quizView" style="display:none;">
+      <div id="qzThinkBlock" class="study-think-holder" style="display:none;"></div>
       <div class="study-progress">
         <span id="qzProgressLabel">Question 1 of 8</span>
         <span id="qzScoreLabel">Score: 0</span>
@@ -1515,15 +1519,21 @@ function buildUserMessage(typedText){
 // rebuilding the whole thread (and re-wiring every button, and re-saving to
 // localStorage) on every single token. Falls back to a full render for the
 // very first chunk, when the row doesn't exist in the DOM yet.
+const STREAM_CONTAINER_MAP = {
+  threadInner: { render: () => renderThreadInner(), scroller: "threadView" },
+  draftChatInner: { render: () => renderDraftChatInner(), scroller: "draftView" },
+  tutorInner: { render: () => renderTutorInner(), scroller: "tutorView" },
+};
+
 function updateStreamingMessageDOM(containerId, idx, m){
   const wrap = document.getElementById(containerId);
   const answerEl = wrap.querySelector(`.answer[data-index="${idx}"]`);
   if(!answerEl){
-    if(containerId === "threadInner") renderThreadInner(); else renderDraftChatInner();
+    STREAM_CONTAINER_MAP[containerId].render();
     return;
   }
   answerEl.innerHTML = formatAnswer(m.content) + (m.content ? '<span class="live-cursor"></span>' : '');
-  const scroller = document.getElementById(containerId === "threadInner" ? "threadView" : "draftView");
+  const scroller = document.getElementById(STREAM_CONTAINER_MAP[containerId].scroller);
   scroller.scrollTop = scroller.scrollHeight;
 }
 
@@ -1531,7 +1541,7 @@ function updateStreamingThinkDOM(containerId, idx, thinkingText){
   const wrap = document.getElementById(containerId);
   const block = wrap.querySelector(`.think-block[data-index="${idx}"]`);
   if(!block){
-    if(containerId === "threadInner") renderThreadInner(); else renderDraftChatInner();
+    STREAM_CONTAINER_MAP[containerId].render();
     return;
   }
   const body = block.querySelector(".think-body");
@@ -1539,7 +1549,7 @@ function updateStreamingThinkDOM(containerId, idx, thinkingText){
     body.innerHTML = formatAnswer(thinkingText);
     body.scrollTop = body.scrollHeight;
   }
-  const scroller = document.getElementById(containerId === "threadInner" ? "threadView" : "draftView");
+  const scroller = document.getElementById(STREAM_CONTAINER_MAP[containerId].scroller);
   scroller.scrollTop = scroller.scrollHeight;
 }
 
@@ -2589,7 +2599,8 @@ function renderLibrary(){
       }
     }
     const card = document.createElement("div");
-    card.className = "deck-card";
+    card.className = "deck-card" + (d.fresh ? " deck-card-fresh" : "");
+    if(d.fresh) d.fresh = false;
     card.innerHTML = `
       <button class="deck-card-delete" title="Delete"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg></button>
       <div class="deck-card-top">
@@ -2600,6 +2611,7 @@ function renderLibrary(){
       <div class="deck-card-meta"><span>${escapeHtml(metaLine)}</span></div>
       ${d.type !== "tutor" && d.lastResult ? `<div class="deck-card-progress"><div class="deck-card-progress-fill" style="width:${pct}%;"></div></div>` : ""}
     `;
+    if(d.fresh) d.fresh = false; // one-time glow — consumed the moment it's actually shown
     card.addEventListener("click", () => {
       activeStudyId = d.id;
       openStudySession(d);
@@ -2637,6 +2649,30 @@ function showStudyError(type){
   document.getElementById("resultDetail").textContent = "Try a different or more specific topic, or try again.";
 }
 
+let studyThinkStartedAt = null;
+
+function startStudyThinking(containerId){
+  const holder = document.getElementById(containerId);
+  studyThinkStartedAt = Date.now();
+  holder.style.display = "block";
+  holder.innerHTML = renderThinkBlockHtml("study", "", true, 0);
+  wireThinkBlock(holder);
+  beginThinkTimer(() => {
+    const timerEl = holder.querySelector(".think-timer");
+    if(timerEl) timerEl.textContent = elapsedSeconds(studyThinkStartedAt) + "s";
+  });
+}
+function updateStudyThinking(containerId, fullText){
+  const holder = document.getElementById(containerId);
+  const body = holder.querySelector(".think-body");
+  if(body){ body.innerHTML = formatAnswer(fullText); body.scrollTop = body.scrollHeight; }
+}
+function finishStudyThinking(containerId){
+  endThinkTimer();
+  const holder = document.getElementById(containerId);
+  if(holder) holder.style.display = "none";
+}
+
 async function generateStudySet(topic, type){
   const content = topic.trim();
   if(!content || loading) return;
@@ -2655,6 +2691,8 @@ async function generateStudySet(topic, type){
   document.getElementById("studentInput").value = "";
   updateStudentSendState();
 
+  const containerId = type === "flashcards" ? "fcThinkBlock" : "qzThinkBlock";
+
   if(type === "flashcards"){
     document.getElementById("quizView").style.display = "none";
     document.getElementById("flashcardView").style.display = "flex";
@@ -2662,7 +2700,7 @@ async function generateStudySet(topic, type){
     document.getElementById("fcHint").textContent = "";
     document.getElementById("fcBack").style.display = "none";
     document.getElementById("fcFront").style.display = "flex";
-    document.getElementById("fcFront").innerHTML = studyLoadingHtml("Building flashcards…");
+    document.getElementById("fcFront").innerHTML = "";
     document.getElementById("fcProgressLabel").textContent = "";
     document.getElementById("fcKnownLabel").textContent = "";
   } else {
@@ -2671,33 +2709,51 @@ async function generateStudySet(topic, type){
     document.getElementById("qzOptions").innerHTML = "";
     document.getElementById("qzExplanation").style.display = "none";
     document.getElementById("qzNextBtn").style.display = "none";
-    document.getElementById("qzQuestion").innerHTML = studyLoadingHtml("Building your quiz…");
+    document.getElementById("qzQuestion").innerHTML = "";
     document.getElementById("qzProgressLabel").textContent = "";
     document.getElementById("qzScoreLabel").textContent = "";
   }
+  startStudyThinking(containerId);
 
   const sysPrompt = type === "flashcards" ? FLASHCARD_SYSTEM_PROMPT : QUIZ_SYSTEM_PROMPT;
   const userMsg = type === "flashcards"
     ? `Generate flashcards for studying: ${content}`
     : `Generate a practice quiz for studying: ${content}`;
 
+  let switchedToBuilding = false;
+  const stageEl = document.getElementById(type === "flashcards" ? "fcFront" : "qzQuestion");
+
   try{
-    const reply = await callClaude([{ role: "user", content: userMsg }], sysPrompt);
+    const reply = await callClaudeStream([{ role: "user", content: userMsg }], sysPrompt, false,
+      (chunk, full) => updateStudyThinking(containerId, full),
+      (chunk, full) => {
+        if(!switchedToBuilding && full){
+          switchedToBuilding = true;
+          finishStudyThinking(containerId);
+          stageEl.innerHTML = studyLoadingHtml(type === "flashcards" ? "Building flashcards…" : "Building your quiz…");
+        }
+      }
+    );
+    finishStudyThinking(containerId);
     const parsed = extractJson(reply.text);
+    deck.thinking = reply.thinking;
     if(type === "flashcards"){
       deck.cards = Array.isArray(parsed.cards) ? parsed.cards.filter(c => c.front && c.back) : [];
       if(deck.cards.length === 0) throw new Error("No cards generated");
+      deck.fresh = true;
       studyDecks.unshift(deck);
       activeStudyId = deck.id;
       startFlashcardSession(deck);
     } else {
       deck.questions = Array.isArray(parsed.questions) ? parsed.questions.filter(q => q.question && Array.isArray(q.options) && q.options.length >= 2) : [];
       if(deck.questions.length === 0) throw new Error("No questions generated");
+      deck.fresh = true;
       studyDecks.unshift(deck);
       activeStudyId = deck.id;
       startQuizSession(deck);
     }
   } catch(e){
+    finishStudyThinking(containerId);
     showStudyError(type);
   } finally {
     loading = false;
@@ -2726,8 +2782,11 @@ function renderTutorInner(){
     } else {
       row.className = "msg-row assistant";
       let inner = `<div class="assistant-label"><svg width="13" height="13" viewBox="0 0 36 36" fill="currentColor" class="assistant-mark"><g transform="rotate(-38 18 15)"><rect x="9" y="4" width="17" height="8" rx="2.6"/><rect x="14.7" y="12" width="5.6" height="17" rx="2.6"/></g><rect x="5" y="29.5" width="15" height="4.2" rx="2.1"/></svg><span class="assistant-name">Lex Tutor</span></div>`;
-      inner += `<div class="answer${m.isError ? ' error' : ''}" data-index="${i}">${formatAnswer(m.content)}</div>`;
-      if(!m.isError){
+      if(m.streaming || m.thinking){
+        inner += renderThinkBlockHtml(i, m.thinking, !!m.streaming, m.thinkSeconds);
+      }
+      inner += `<div class="answer${m.isError ? ' error' : ''}" data-index="${i}">${formatAnswer(m.content)}${m.streaming && m.content ? '<span class="live-cursor"></span>' : ''}</div>`;
+      if(!m.isError && !m.streaming){
         inner += `
           <div class="msg-actions" data-index="${i}">
             <button class="act-copy" title="Copy"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
@@ -2741,7 +2800,8 @@ function renderTutorInner(){
     }
     wrap.appendChild(row);
   });
-  if(loading){
+  const lastMsg = deck.messages[deck.messages.length - 1];
+  if(loading && !(lastMsg && lastMsg.role === "assistant" && lastMsg.streaming)){
     const row = document.createElement("div");
     row.className = "thinking-row";
     row.innerHTML = `<div class="gavel-loader"><svg viewBox="0 0 36 36" fill="currentColor"><g transform="rotate(-32 18 15)"><rect x="9" y="4" width="17" height="8" rx="2.6"/><rect x="14.7" y="12" width="5.6" height="17" rx="2.6"/></g><rect x="5" y="29.5" width="15" height="4.2" rx="2.1"/></svg></div><div class="thinking-label">Thinking…</div>`;
@@ -2750,7 +2810,9 @@ function renderTutorInner(){
   wireMessageActions(wrap);
   wireUserActions(wrap);
   wireLongPress(wrap);
+  wireThinkBlock(wrap);
   document.getElementById("tutorView").scrollTop = document.getElementById("tutorView").scrollHeight;
+  saveThreads();
 }
 
 function startTutorSession(deck){
@@ -2782,15 +2844,39 @@ async function sendTutorMessage(text, isFirst){
   const deck = studyDecks.find(d => d.id === activeStudyId);
   if(!content || loading || !deck) return;
   deck.messages.push({ role: "user", content });
+  const contextMessages = deck.messages.slice();
   loading = true;
   if(!isFirst){ document.getElementById("tutorInput").value = ""; updateTutorSendState(); }
   renderTutorInner();
 
+  const startedAt = Date.now();
+  const placeholder = { role: "assistant", content: "", thinking: "", streaming: true, thinkStartedAt: startedAt };
+  deck.messages.push(placeholder);
+  const idx = deck.messages.length - 1;
+  renderTutorInner();
+  beginThinkTimer(() => updateStreamingTimerDOM("tutorInner", idx, startedAt));
+
   try{
-    const reply = await callClaude(deck.messages, TUTOR_SYSTEM_PROMPT);
-    deck.messages.push({ role: "assistant", content: reply.text });
+    const reply = await callClaudeStream(contextMessages, TUTOR_SYSTEM_PROMPT, false,
+      (chunk, full) => { placeholder.thinking = full; updateStreamingThinkDOM("tutorInner", idx, full); },
+      (chunk, full) => {
+        if(!placeholder.content && full){
+          endThinkTimer();
+          placeholder.thinkSeconds = elapsedSeconds(startedAt);
+          finalizeStreamingThinkDOM("tutorInner", idx, placeholder.thinkSeconds);
+        }
+        placeholder.content = full;
+        updateStreamingMessageDOM("tutorInner", idx, placeholder);
+      }
+    );
+    endThinkTimer();
+    placeholder.content = reply.text;
+    placeholder.thinking = reply.thinking;
+    placeholder.thinkSeconds = placeholder.thinkSeconds || elapsedSeconds(startedAt);
+    delete placeholder.streaming;
   } catch(e){
-    deck.messages.push({ role: "assistant", content: "Something went wrong reaching the AI service. Please try again.", isError: true });
+    endThinkTimer();
+    deck.messages[idx] = { role: "assistant", content: "Something went wrong reaching the AI service. Please try again.", isError: true };
   } finally {
     loading = false;
     renderTutorInner();
