@@ -81,6 +81,34 @@
   .avatar{ width:38px; height:38px; border-radius:50%; background:var(--ink); border:none; color:var(--inv); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; flex-shrink:0; font-family:'Public Sans',sans-serif; cursor:pointer; transition:opacity .12s; padding:0; margin-left:auto; }
   .avatar:hover{ opacity:.82; }
 
+  /* ---- study mode pills + new create-sheet controls ---- */
+  .modepills{ display:flex; flex-wrap:wrap; gap:8px; }
+  .pill{
+    padding:8px 14px; border:1.5px solid var(--line); border-radius:20px; font-size:13px; font-weight:600;
+    color:var(--dim); cursor:pointer; background:var(--bg); transition:border-color .12s, background .12s, color .12s;
+    user-select:none;
+  }
+  .pill:hover{ border-color:var(--ink); color:var(--ink); }
+  .pill.on{ background:var(--ink); border-color:var(--ink); color:var(--inv); }
+  .study-subrow{ display:flex; flex-direction:column; gap:10px; margin-top:14px; padding-top:14px; border-top:1px solid var(--line-soft); }
+  .study-subrow-label{ font-size:12px; font-weight:600; color:var(--dim); }
+  .depth-select{
+    width:100%; border:1.5px solid var(--line); border-radius:10px; padding:9px 12px; font-size:13.5px;
+    font-family:'Public Sans',sans-serif; color:var(--ink); background:var(--bg);
+  }
+  .toggle-row{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .toggle-row .t{ font-size:13.5px; color:var(--ink); }
+  .toggle-switch{
+    position:relative; width:38px; height:22px; border-radius:11px; background:var(--line); border:none; cursor:pointer;
+    flex-shrink:0; transition:background .15s;
+  }
+  .toggle-switch::after{
+    content:""; position:absolute; top:2px; left:2px; width:18px; height:18px; border-radius:50%; background:#fff;
+    box-shadow:0 1px 2px rgba(0,0,0,0.2); transition:transform .15s;
+  }
+  .toggle-switch.on{ background:var(--ink); }
+  .toggle-switch.on::after{ transform:translateX(16px); }
+
   /* ---- settings modal ---- */
   .modal-backdrop{ display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:50; align-items:flex-end; justify-content:center; }
   .modal-backdrop.show{ display:flex; }
@@ -860,16 +888,42 @@
           </button>
         </div>
         <div class="modal-body" style="padding:14px 16px 18px 16px;">
-          <div class="modepills" style="margin-bottom:16px;">
+          <div class="modepills" style="margin-bottom:14px;">
             <div class="pill on" id="studyModeFlashcards">Flashcards</div>
             <div class="pill" id="studyModeQuiz">Quiz</div>
             <div class="pill" id="studyModeTutor">Tutor</div>
+            <div class="pill" id="studyModeBrief">Case Brief</div>
+            <div class="pill" id="studyModeIrac">IRAC Analysis</div>
           </div>
-          <div class="composer" id="studentComposer">
+
+          <div id="tutorOptions" style="display:none;">
+            <div class="study-subrow">
+              <div class="toggle-row">
+                <span class="t">Teach me a specific case</span>
+                <button class="toggle-switch" id="teachCaseToggle"></button>
+              </div>
+              <div>
+                <div class="study-subrow-label" style="margin-bottom:6px;">Explain at this level</div>
+                <select class="depth-select" id="tutorDepthSelect">
+                  <option value="ELI5">ELI5 — explain it very simply</option>
+                  <option value="100-level law student" selected>100-level law student</option>
+                  <option value="undergraduate law student">Undergraduate law student</option>
+                  <option value="advanced law student preparing for finals">Advanced / final-year student</option>
+                  <option value="practicing lawyer">Practitioner</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="composer" id="studentComposer" style="margin-top:14px;">
+            <div class="attach-chip-row" id="studentAttachChip"></div>
             <div class="composer-row">
               <textarea id="studentInput" rows="1" placeholder="e.g. offer and acceptance in contract law"></textarea>
             </div>
             <div class="composer-foot">
+              <button class="plus-btn" id="studentAttachBtn" title="Attach notes or a case (e.g. lecture notes, a judgment)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              </button>
               <span class="model-pill">Lex 1.0</span>
               <div class="composer-actions">
                 <button class="send-btn" id="studentSendBtn" disabled>
@@ -879,6 +933,32 @@
             </div>
           </div>
           <div class="persist-disclaimer" id="studyCreateDisclaimer">Practice material generated by Lex — not verified past exam questions. Useful for revision, not a substitute for your course materials.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CASE BRIEF / IRAC VIEW (structured one-shot generation, chat-style follow-ups) -->
+    <div class="thread-view" id="briefView" style="display:none;">
+      <div class="thread-inner" id="briefChatInner"></div>
+    </div>
+    <div class="followup" id="briefFollowup" style="display:none;">
+      <div class="followup-inner">
+        <div class="composer" id="briefFollowComposer">
+          <div class="attach-chip-row" id="briefFollowAttachChip"></div>
+          <div class="composer-row">
+            <textarea id="briefFollowInput" rows="1" placeholder="Ask a follow-up, or paste another case/fact pattern…"></textarea>
+          </div>
+          <div class="composer-foot">
+            <button class="plus-btn" id="briefFollowAttachBtn" title="Attach a document">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+            <span class="model-pill">Lex 1.0</span>
+            <div class="composer-actions">
+              <button class="send-btn" id="briefFollowSendBtn" disabled>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -1523,6 +1603,7 @@ const STREAM_CONTAINER_MAP = {
   threadInner: { render: () => renderThreadInner(), scroller: "threadView" },
   draftChatInner: { render: () => renderDraftChatInner(), scroller: "draftView" },
   tutorInner: { render: () => renderTutorInner(), scroller: "tutorView" },
+  briefChatInner: { render: () => renderBriefChatInner(), scroller: "briefView" },
 };
 
 function updateStreamingMessageDOM(containerId, idx, m){
@@ -1632,18 +1713,36 @@ async function startResearch(text){
 function activeChatSession(){
   if(currentMode === "student"){
     const deck = studyDecks.find(d => d.id === activeStudyId);
-    if(!deck || deck.type !== "tutor") return null;
-    return {
-      messages: deck.messages,
-      render: renderTutorInner,
-      inputId: "tutorInput",
-      updateSendState: updateTutorSendState,
-      regenerate: async (msgs) => {
-        const reply = await callClaude(msgs, TUTOR_SYSTEM_PROMPT);
-        return { role: "assistant", content: reply.text };
-      },
-      save: saveThreads
-    };
+    if(!deck) return null;
+    if(deck.type === "tutor"){
+      return {
+        messages: deck.messages,
+        render: renderTutorInner,
+        inputId: "tutorInput",
+        updateSendState: updateTutorSendState,
+        regenerate: async (msgs) => {
+          const reply = await callClaude(msgs, deck.sysPrompt || TUTOR_SYSTEM_PROMPT);
+          return { role: "assistant", content: reply.text };
+        },
+        save: saveThreads
+      };
+    }
+    if(deck.type === "brief" || deck.type === "irac"){
+      const sysPrompt = deck.type === "brief" ? CASE_BRIEF_SYSTEM_PROMPT : IRAC_SYSTEM_PROMPT;
+      return {
+        messages: deck.messages,
+        render: renderBriefChatInner,
+        inputId: "briefFollowInput",
+        updateSendState: updateBriefSendState,
+        regenerate: async (msgs) => {
+          const reply = await callClaude(msgs, sysPrompt);
+          const { doc, notes } = parseDraftResponse(reply.text);
+          return { role: "assistant", content: doc, notes, thinking: reply.thinking, isDraft: true };
+        },
+        save: saveThreads
+      };
+    }
+    return null;
   }
   if(currentMode === "drafting"){
     const d = activeDraft();
@@ -2478,7 +2577,8 @@ function switchMode(mode){
   // Hide every top-level screen from every mode first, then show only
   // what the target mode needs — avoids stale screens leaking through.
   ["home","threadView","followup","draftHome","draftView","draftFollowup",
-   "studentHome","flashcardView","quizView","studyResult","tutorView","tutorFollowup"].forEach(id => {
+   "studentHome","flashcardView","quizView","studyResult","tutorView","tutorFollowup",
+   "briefView","briefFollowup"].forEach(id => {
     document.getElementById(id).style.display = "none";
   });
 
@@ -2523,16 +2623,91 @@ Rules:
 - Stay accurate. Never fabricate case names, citations, or section numbers — if uncertain, say so plainly and reason from the general principle instead.
 - Keep tone warm, encouraging, and patient — this is a study partner, not an exam.`;
 
+function tutorSystemPrompt(depth){
+  const d = depth || "100-level law student";
+  return `${TUTOR_SYSTEM_PROMPT}\n\nPitch your language, vocabulary, and the complexity of your explanations for a ${d}. Adjust your examples and pacing to suit that level specifically.`;
+}
+
+const TEACH_CASE_SYSTEM_PROMPT = `You are LexAI's "Teach me this case" tutor — turning a named case into a short interactive lesson, in the spirit of ChatGPT Study Mode / Claude Learning Mode.
+
+Structure for the FIRST message only:
+1. Briefly state the facts of the case (2-4 sentences) — withhold the court's decision and reasoning.
+2. Ask the student what they think the key legal issue is, or what they think the court decided and why.
+Do NOT reveal the holding, ratio, or outcome yet.
+
+On later turns:
+- Respond to what the student said. If they're roughly right, confirm and build on it; if they're off, guide them (don't just correct bluntly).
+- When it's time, reveal the court's actual reasoning and holding, and explicitly compare it to what the student guessed.
+- Finish with 1-2 short quiz questions checking they understood the ratio, not just the outcome.
+
+Accuracy rules:
+- If you are not confident of the real facts, citation, or holding of the named case, say so plainly rather than inventing them. Offer to proceed with a hypothetical version of the fact pattern instead, or ask the student to paste the judgment text so you can work from that directly.
+- Never fabricate a citation.
+- Keep each message short — one step at a time, not a lecture.`;
+
+function teachCaseSystemPrompt(depth){
+  const d = depth || "100-level law student";
+  return `${TEACH_CASE_SYSTEM_PROMPT}\n\nPitch your language and the depth of the reasoning discussion for a ${d}.`;
+}
+
+const CASE_BRIEF_SYSTEM_PROMPT = `You are LexAI's case brief generator for law students.
+
+Output ONLY the brief first — no preamble — using these headings in this order (omit a heading only if genuinely inapplicable, e.g. no dissent):
+### Citation
+### Court
+### Date
+### Facts
+### Procedural History
+### Issues
+### Holding
+### Ratio Decidendi
+### Obiter Dicta
+### Key Authorities Cited
+
+Rules:
+- If a document/judgment text was attached or pasted, brief THAT text directly and pull real facts, dates, and reasoning from it.
+- If only a case name was given (no attached text), brief it from general knowledge, but if you are not confident of the exact citation, date, or specific reasoning, say so plainly in that section (e.g. "Citation uncertain — verify independently") rather than inventing specifics. Never fabricate a citation, court, or date.
+- Facts should be concise — the material facts only, not a full recitation.
+- Ratio Decidendi should isolate the actual binding principle, distinct from obiter commentary.
+- After the brief, add a line containing exactly ---NOTES--- followed by a short list of anything uncertain, recalled from general knowledge rather than a source document, or worth the student double-checking.
+- If the person then asks a follow-up (e.g. "what did I miss", "explain the ratio further", "how does this compare to X case"), answer conversationally and do not repeat the whole brief unless they ask you to regenerate it.`;
+
+const IRAC_SYSTEM_PROMPT = `You are LexAI's IRAC analyzer — helping a law student practice legal issue-spotting and structured analysis on a fact pattern they provide.
+
+Output ONLY the analysis first — no preamble — using these headings:
+### Issue
+### Rule
+### Application
+### Conclusion
+
+Rules:
+- Be specific to the facts actually given — apply the rule to those facts, don't just restate the rule generically.
+- If the fact pattern raises more than one issue, number them (Issue 1, Issue 2, ...) and run each through Rule/Application/Conclusion in turn.
+- Never fabricate a case citation or statutory section; if a real one isn't confidently known, describe the rule generally instead (e.g. "the general test for negligence" rather than inventing a case name).
+- After the analysis, add a line containing exactly ---NOTES--- followed by 1-3 short prompts (not answers) about issues or angles the student might want to double-check themselves — phrase these as questions or nudges, in the spirit of Socratic teaching, not as the answer handed to them.
+- If the person asks "what did I miss" or similar, help them find gaps in their OWN reasoning with guiding questions rather than just supplying the missing analysis outright.`;
+
 function studyModeLabel(mode){
-  return mode === "flashcards" ? "Flashcards" : mode === "quiz" ? "Quiz" : "Tutor";
+  return { flashcards: "Flashcards", quiz: "Quiz", tutor: "Tutor", brief: "Case Brief", irac: "IRAC Analysis" }[mode] || mode;
 }
 
 function updateStudyCreateUI(){
   const input = document.getElementById("studentInput");
   const disclaimer = document.getElementById("studyCreateDisclaimer");
-  if(studyMode === "tutor"){
+  document.getElementById("tutorOptions").style.display = studyMode === "tutor" ? "block" : "none";
+  const teachOn = document.getElementById("teachCaseToggle").classList.contains("on");
+  if(studyMode === "tutor" && teachOn){
+    input.placeholder = "e.g. Donoghue v Stevenson";
+    disclaimer.textContent = "Lex works from general knowledge of named cases — for guaranteed accuracy, paste or attach the judgment text.";
+  } else if(studyMode === "tutor"){
     input.placeholder = "e.g. offer and acceptance in contract law";
     disclaimer.textContent = "Lex's Tutor guides with questions rather than direct answers — it's practice support, not a substitute for your course materials.";
+  } else if(studyMode === "brief"){
+    input.placeholder = "e.g. Donoghue v Stevenson [1932] AC 562 — or attach the judgment";
+    disclaimer.textContent = "Attach the judgment for an accurate brief, or brief from general knowledge — Lex flags anything uncertain rather than guessing.";
+  } else if(studyMode === "irac"){
+    input.placeholder = "Paste the fact pattern you want analyzed…";
+    disclaimer.textContent = "Practice analysis by Lex — a study aid for your own issue-spotting, not a substitute for your own reasoning.";
   } else {
     input.placeholder = "e.g. offer and acceptance in contract law";
     disclaimer.textContent = "Practice material generated by Lex — not verified past exam questions. Useful for revision, not a substitute for your course materials.";
@@ -2553,6 +2728,7 @@ function studyLoadingHtml(label){
 function openStudySession(deck){
   if(deck.type === "flashcards") startFlashcardSession(deck);
   else if(deck.type === "quiz") startQuizSession(deck);
+  else if(deck.type === "brief" || deck.type === "irac") startBriefSession(deck);
   else startTutorSession(deck);
 }
 
@@ -2562,6 +2738,8 @@ function showStudentHome(){
   document.getElementById("studyResult").style.display = "none";
   document.getElementById("tutorView").style.display = "none";
   document.getElementById("tutorFollowup").style.display = "none";
+  document.getElementById("briefView").style.display = "none";
+  document.getElementById("briefFollowup").style.display = "none";
   document.getElementById("studentHome").style.display = "flex";
   document.getElementById("threadTitle").textContent = "";
   activeStudyId = null;
@@ -2572,6 +2750,8 @@ function showStudentHome(){
 function deckTypeMeta(type){
   if(type === "flashcards") return { label: "Cards", icon: `<rect x="3" y="4" width="14" height="18" rx="2" transform="rotate(-8 10 13)"/><rect x="6" y="2" width="14" height="18" rx="2"/>` };
   if(type === "quiz") return { label: "Quiz", icon: `<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-2 1.8-2 3.5"/><circle cx="12" cy="16.5" r=".6" fill="currentColor"/>` };
+  if(type === "brief") return { label: "Brief", icon: `<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/>` };
+  if(type === "irac") return { label: "IRAC", icon: `<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>` };
   return { label: "Tutor", icon: `<path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>` };
 }
 
@@ -2590,6 +2770,9 @@ function renderLibrary(){
     if(d.type === "tutor"){
       const exchanges = Math.floor((d.messages || []).length / 2);
       metaLine = `${exchanges} exchange${exchanges === 1 ? "" : "s"}`;
+    } else if(d.type === "brief" || d.type === "irac"){
+      const turns = Math.floor((d.messages || []).length / 2);
+      metaLine = turns <= 1 ? "Generated" : `${turns} exchanges`;
     } else {
       const total = d.type === "flashcards" ? d.cards.length : d.questions.length;
       metaLine = `${total} ${d.type === "flashcards" ? "card" : "question"}${total === 1 ? "" : "s"}`;
@@ -2600,7 +2783,6 @@ function renderLibrary(){
     }
     const card = document.createElement("div");
     card.className = "deck-card" + (d.fresh ? " deck-card-fresh" : "");
-    if(d.fresh) d.fresh = false;
     card.innerHTML = `
       <button class="deck-card-delete" title="Delete"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg></button>
       <div class="deck-card-top">
@@ -2609,7 +2791,7 @@ function renderLibrary(){
       </div>
       <div class="deck-card-title">${escapeHtml(d.title)}</div>
       <div class="deck-card-meta"><span>${escapeHtml(metaLine)}</span></div>
-      ${d.type !== "tutor" && d.lastResult ? `<div class="deck-card-progress"><div class="deck-card-progress-fill" style="width:${pct}%;"></div></div>` : ""}
+      ${d.type !== "tutor" && d.type !== "brief" && d.type !== "irac" && d.lastResult ? `<div class="deck-card-progress"><div class="deck-card-progress-fill" style="width:${pct}%;"></div></div>` : ""}
     `;
     if(d.fresh) d.fresh = false; // one-time glow — consumed the moment it's actually shown
     card.addEventListener("click", () => {
@@ -2675,20 +2857,29 @@ function finishStudyThinking(containerId){
 
 async function generateStudySet(topic, type){
   const content = topic.trim();
-  if(!content || loading) return;
+  if(!content && !pendingAttachment) return;
+  if(loading) return;
 
   if(type === "tutor"){
-    await startTutorFromTopic(content);
+    const teachOn = document.getElementById("teachCaseToggle").classList.contains("on");
+    const depth = document.getElementById("tutorDepthSelect").value;
+    await startTutorFromTopic(content || "the attached material", { teachOn, depth });
+    return;
+  }
+  if(type === "brief" || type === "irac"){
+    await startBriefFromTopic(content || "the attached document", type);
     return;
   }
 
-  const deck = { id: uid(), title: content.slice(0, 46) + (content.length > 46 ? "…" : ""), type, cards: [], questions: [], lastResult: null };
+  const deck = { id: uid(), title: (content || "Attached document").slice(0, 46) + (content.length > 46 ? "…" : ""), type, cards: [], questions: [], lastResult: null };
 
+  const msg = buildUserMessage(content || `Generate ${type === "flashcards" ? "flashcards" : "a quiz"} from the attached document.`);
   closeStudyCreate();
   document.getElementById("studentHome").style.display = "none";
   document.getElementById("studyResult").style.display = "none";
   loading = true;
   document.getElementById("studentInput").value = "";
+  clearAttachment();
   updateStudentSendState();
 
   const containerId = type === "flashcards" ? "fcThinkBlock" : "qzThinkBlock";
@@ -2716,15 +2907,12 @@ async function generateStudySet(topic, type){
   startStudyThinking(containerId);
 
   const sysPrompt = type === "flashcards" ? FLASHCARD_SYSTEM_PROMPT : QUIZ_SYSTEM_PROMPT;
-  const userMsg = type === "flashcards"
-    ? `Generate flashcards for studying: ${content}`
-    : `Generate a practice quiz for studying: ${content}`;
 
   let switchedToBuilding = false;
   const stageEl = document.getElementById(type === "flashcards" ? "fcFront" : "qzQuestion");
 
   try{
-    const reply = await callClaudeStream([{ role: "user", content: userMsg }], sysPrompt, false,
+    const reply = await callClaudeStream([msg], sysPrompt, false,
       (chunk, full) => updateStudyThinking(containerId, full),
       (chunk, full) => {
         if(!switchedToBuilding && full){
@@ -2828,15 +3016,22 @@ function startTutorSession(deck){
   renderStudyList();
 }
 
-async function startTutorFromTopic(topic){
-  const deck = { id: uid(), title: topic.slice(0, 46) + (topic.length > 46 ? "…" : ""), type: "tutor", messages: [] };
+async function startTutorFromTopic(topic, opts){
+  opts = opts || {};
+  const sysPrompt = opts.teachOn ? teachCaseSystemPrompt(opts.depth) : tutorSystemPrompt(opts.depth);
+  const title = (opts.teachOn ? `Teach me: ${topic}` : topic).slice(0, 46) + (topic.length > 46 ? "…" : "");
+  const deck = { id: uid(), title, type: "tutor", messages: [], sysPrompt };
   closeStudyCreate();
   studyDecks.unshift(deck);
   activeStudyId = deck.id;
   document.getElementById("studentInput").value = "";
+  clearAttachment();
   updateStudentSendState();
   startTutorSession(deck);
-  await sendTutorMessage(`I want to learn about: ${topic}`, true);
+  const openingMsg = opts.teachOn
+    ? `I want you to teach me the case: ${topic}`
+    : `I want to learn about: ${topic}`;
+  await sendTutorMessage(openingMsg, true);
 }
 
 async function sendTutorMessage(text, isFirst){
@@ -2857,7 +3052,7 @@ async function sendTutorMessage(text, isFirst){
   beginThinkTimer(() => updateStreamingTimerDOM("tutorInner", idx, startedAt));
 
   try{
-    const reply = await callClaudeStream(contextMessages, TUTOR_SYSTEM_PROMPT, false,
+    const reply = await callClaudeStream(contextMessages, deck.sysPrompt || TUTOR_SYSTEM_PROMPT, false,
       (chunk, full) => { placeholder.thinking = full; updateStreamingThinkDOM("tutorInner", idx, full); },
       (chunk, full) => {
         if(!placeholder.content && full){
@@ -2884,6 +3079,180 @@ async function sendTutorMessage(text, isFirst){
     saveThreads();
   }
 }
+
+/* ---- Case Brief / IRAC Analysis (structured one-shot + follow-up chat) ---- */
+function renderBriefChatInner(){
+  const deck = studyDecks.find(d => d.id === activeStudyId);
+  const wrap = document.getElementById("briefChatInner");
+  wrap.innerHTML = "";
+  if(!deck) return;
+  const cardLabel = deck.type === "brief" ? "Case Brief" : "IRAC Analysis";
+
+  deck.messages.forEach((m, i) => {
+    const row = document.createElement("div");
+    if(m.role === "user"){
+      row.className = "msg-row user";
+      row.innerHTML = `
+        <div class="user-bubble" data-index="${i}">${m.attachmentName ? `<div class="msg-attach-chip"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>${escapeHtml(m.attachmentName)}</span></div>` : ""}${escapeHtml(m.displayContent !== undefined ? m.displayContent : m.content)}</div>
+        <div class="user-actions" data-index="${i}">
+          <button class="uact-retry" title="Retry"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12a9 9 0 1 1-3-6.7"/><polyline points="21 3 21 9 15 9"/></svg></button>
+          <button class="uact-edit" title="Edit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></button>
+          <button class="uact-copy" title="Copy"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+        </div>`;
+    } else {
+      row.className = "msg-row assistant";
+      let inner = `<div class="assistant-label"><svg width="13" height="13" viewBox="0 0 36 36" fill="currentColor" class="assistant-mark"><g transform="rotate(-38 18 15)"><rect x="9" y="4" width="17" height="8" rx="2.6"/><rect x="14.7" y="12" width="5.6" height="17" rx="2.6"/></g><rect x="5" y="29.5" width="15" height="4.2" rx="2.1"/></svg><span class="assistant-name">LexAI</span></div>`;
+      if(m.streaming || m.thinking){
+        inner += renderThinkBlockHtml(i, m.thinking, !!m.streaming, m.thinkSeconds);
+      }
+      if(m.isError){
+        inner += `<div class="answer error" data-index="${i}">${formatAnswer(m.content)}</div>`;
+      } else if(m.isDraft){
+        inner += `
+          <div class="doc-card${m.justFinished ? " doc-card-fresh" : ""}" data-index="${i}">
+            <div class="doc-card-head">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 12h6M9 16h6M9 8h1"/><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              <span class="doc-card-label">${cardLabel}</span>
+              <div class="doc-card-actions">
+                <button class="doc-card-copy" title="Copy"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                <button class="doc-card-download" title="Download"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+              </div>
+            </div>
+            <div class="doc-card-body answer" data-index="${i}">${formatAnswer(m.content)}${m.streaming && m.content ? '<span class="live-cursor"></span>' : ''}</div>
+            ${m.notes ? `<div class="doc-card-notes"><strong>Worth checking:</strong> ${escapeHtml(m.notes)}</div>` : ""}
+          </div>`;
+      } else {
+        inner += `<div class="answer" data-index="${i}">${formatAnswer(m.content)}${m.streaming && m.content ? '<span class="live-cursor"></span>' : ''}</div>`;
+      }
+      if(!m.isError && !m.streaming){
+        inner += `
+          <div class="msg-actions" data-index="${i}">
+            <button class="act-copy" title="Copy"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+            <button class="act-read" title="Read aloud"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polygon points="4 8 8 8 12 4 12 20 8 16 4 16 4 8"/><path d="M16 9a4 4 0 0 1 0 6"/></svg></button>
+            <button class="act-up" title="Good response"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 11v10H4a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1zM7 11l4-8a2 2 0 0 1 4 1.5V9h5.5a2 2 0 0 1 2 2.3l-1.2 8A2 2 0 0 1 19.3 21H10a3 3 0 0 1-3-3"/></svg></button>
+            <button class="act-down" title="Poor response"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 13V3h3a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1zM17 13l-4 8a2 2 0 0 1-4-1.5V15H3.5a2 2 0 0 1-2-2.3l1.2-8A2 2 0 0 1 4.7 3H14a3 3 0 0 1 3 3"/></svg></button>
+            <button class="act-regen" title="Regenerate"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12a9 9 0 1 1-3-6.7"/><polyline points="21 3 21 9 15 9"/></svg></button>
+          </div>`;
+      }
+      row.innerHTML = inner;
+    }
+    wrap.appendChild(row);
+  });
+
+  wireMessageActions(wrap);
+  wireUserActions(wrap);
+  wireLongPress(wrap);
+  wireThinkBlock(wrap);
+  wireDocCards(wrap);
+
+  const lastMsg = deck.messages[deck.messages.length - 1];
+  if(loading && !(lastMsg && lastMsg.role === "assistant" && lastMsg.streaming)){
+    const row = document.createElement("div");
+    row.className = "thinking-row";
+    row.innerHTML = `<div class="gavel-loader"><svg viewBox="0 0 36 36" fill="currentColor"><g transform="rotate(-32 18 15)"><rect x="9" y="4" width="17" height="8" rx="2.6"/><rect x="14.7" y="12" width="5.6" height="17" rx="2.6"/></g><rect x="5" y="29.5" width="15" height="4.2" rx="2.1"/></svg></div><div class="thinking-label">Thinking…</div>`;
+    wrap.appendChild(row);
+  }
+  document.getElementById("briefView").scrollTop = document.getElementById("briefView").scrollHeight;
+  saveThreads();
+}
+
+function startBriefSession(deck){
+  document.getElementById("studentHome").style.display = "none";
+  document.getElementById("studyResult").style.display = "none";
+  document.getElementById("flashcardView").style.display = "none";
+  document.getElementById("quizView").style.display = "none";
+  document.getElementById("briefView").style.display = "flex";
+  document.getElementById("briefFollowup").style.display = "block";
+  document.getElementById("threadTitle").textContent = deck.title;
+  activeStudyId = deck.id;
+  renderBriefChatInner();
+  renderStudyList();
+}
+
+async function runBriefStream(deck, sysPrompt, isFirst){
+  const contextMessages = deck.messages.slice();
+  const startedAt = Date.now();
+  const placeholder = { role: "assistant", content: "", thinking: "", streaming: true, isDraft: true, thinkStartedAt: startedAt };
+  deck.messages.push(placeholder);
+  const idx = deck.messages.length - 1;
+  renderBriefChatInner();
+  beginThinkTimer(() => updateStreamingTimerDOM("briefChatInner", idx, startedAt));
+
+  try{
+    const reply = await callClaudeStream(contextMessages, sysPrompt, false,
+      (chunk, full) => { placeholder.thinking = full; updateStreamingThinkDOM("briefChatInner", idx, full); },
+      (chunk, full) => {
+        if(!placeholder.content && full){
+          endThinkTimer();
+          placeholder.thinkSeconds = elapsedSeconds(startedAt);
+          finalizeStreamingThinkDOM("briefChatInner", idx, placeholder.thinkSeconds);
+        }
+        placeholder.content = full.split("---NOTES---")[0];
+        updateStreamingMessageDOM("briefChatInner", idx, placeholder);
+      }
+    );
+    endThinkTimer();
+    const { doc, notes } = parseDraftResponse(reply.text);
+    placeholder.content = doc;
+    placeholder.notes = notes;
+    placeholder.thinking = reply.thinking;
+    placeholder.thinkSeconds = placeholder.thinkSeconds || elapsedSeconds(startedAt);
+    placeholder.justFinished = true;
+    if(isFirst) deck.fresh = true;
+  } catch(e){
+    endThinkTimer();
+    deck.messages[idx] = { role: "assistant", content: "Something went wrong generating this. Please try again.", isError: true };
+  } finally {
+    loading = false;
+    renderBriefChatInner();
+    renderStudyList();
+    saveThreads();
+    setTimeout(() => { placeholder.justFinished = false; }, 1400);
+  }
+}
+
+async function startBriefFromTopic(topic, type){
+  const cardLabel = type === "brief" ? "Case Brief" : "IRAC Analysis";
+  const deck = { id: uid(), title: `${cardLabel}: ${topic}`.slice(0, 50) + (topic.length > 46 ? "…" : ""), type, messages: [] };
+  const msg = buildUserMessage(topic);
+  deck.messages.push(msg);
+  closeStudyCreate();
+  studyDecks.unshift(deck);
+  activeStudyId = deck.id;
+  document.getElementById("studentInput").value = "";
+  clearAttachment();
+  updateStudentSendState();
+  loading = true;
+  startBriefSession(deck);
+  await runBriefStream(deck, type === "brief" ? CASE_BRIEF_SYSTEM_PROMPT : IRAC_SYSTEM_PROMPT, true);
+}
+
+async function sendBriefMessage(text){
+  const content = text.trim();
+  if(!content && !pendingAttachment) return;
+  if(loading) return;
+  const deck = studyDecks.find(d => d.id === activeStudyId);
+  if(!deck) return;
+  const msg = buildUserMessage(text);
+  deck.messages.push(msg);
+  clearAttachment();
+  loading = true;
+  document.getElementById("briefFollowInput").value = "";
+  updateBriefSendState();
+  renderBriefChatInner();
+  await runBriefStream(deck, deck.type === "brief" ? CASE_BRIEF_SYSTEM_PROMPT : IRAC_SYSTEM_PROMPT);
+}
+
+function updateBriefSendState(){
+  const btn = document.getElementById("briefFollowSendBtn");
+  if(btn) btn.disabled = (!document.getElementById("briefFollowInput").value.trim() && !pendingAttachment) || loading;
+}
+
+const briefFollowInput = document.getElementById("briefFollowInput");
+briefFollowInput.addEventListener("input", () => { autoGrow(briefFollowInput); updateBriefSendState(); });
+briefFollowInput.addEventListener("keydown", e => { if(e.key === "Enter" && !e.shiftKey){ e.preventDefault(); sendBriefMessage(briefFollowInput.value); } });
+document.getElementById("briefFollowSendBtn").addEventListener("click", () => sendBriefMessage(briefFollowInput.value));
+document.getElementById("briefFollowAttachBtn").addEventListener("click", () => fileInput.click());
 
 function updateTutorSendState(){
   document.getElementById("tutorSendBtn").disabled = !document.getElementById("tutorInput").value.trim() || loading;
@@ -3100,11 +3469,23 @@ function setStudyMode(mode){
   document.getElementById("studyModeFlashcards").classList.toggle("on", mode === "flashcards");
   document.getElementById("studyModeQuiz").classList.toggle("on", mode === "quiz");
   document.getElementById("studyModeTutor").classList.toggle("on", mode === "tutor");
+  document.getElementById("studyModeBrief").classList.toggle("on", mode === "brief");
+  document.getElementById("studyModeIrac").classList.toggle("on", mode === "irac");
   updateStudyCreateUI();
 }
 document.getElementById("studyModeFlashcards").addEventListener("click", () => setStudyMode("flashcards"));
 document.getElementById("studyModeQuiz").addEventListener("click", () => setStudyMode("quiz"));
 document.getElementById("studyModeTutor").addEventListener("click", () => setStudyMode("tutor"));
+document.getElementById("studyModeBrief").addEventListener("click", () => setStudyMode("brief"));
+document.getElementById("studyModeIrac").addEventListener("click", () => setStudyMode("irac"));
+
+document.getElementById("teachCaseToggle").addEventListener("click", () => {
+  const btn = document.getElementById("teachCaseToggle");
+  btn.classList.toggle("on");
+  updateStudyCreateUI();
+});
+
+document.getElementById("studentAttachBtn").addEventListener("click", () => fileInput.click());
 
 const studentInput = document.getElementById("studentInput");
 studentInput.addEventListener("input", () => { autoGrow(studentInput); updateStudentSendState(); });
@@ -3112,7 +3493,7 @@ studentInput.addEventListener("keydown", e => { if(e.key === "Enter" && !e.shift
 document.getElementById("studentSendBtn").addEventListener("click", () => generateStudySet(studentInput.value, studyMode));
 
 function updateStudentSendState(){
-  document.getElementById("studentSendBtn").disabled = !studentInput.value.trim() || loading;
+  document.getElementById("studentSendBtn").disabled = (!studentInput.value.trim() && !pendingAttachment) || loading;
 }
 
 function renderStudyList(){
@@ -3171,6 +3552,8 @@ async function handleFileAttach(file){
     renderAttachmentChip();
     updateSendStates();
     updateDraftChatSendState();
+    updateStudentSendState();
+    updateBriefSendState();
   } catch(e){
     alert("Couldn't read that file. Please try again.");
   }
@@ -3192,8 +3575,10 @@ function renderAttachmentChip(){
   document.getElementById("followAttachChip").innerHTML = html;
   document.getElementById("draftHomeAttachChip").innerHTML = html;
   document.getElementById("draftFollowAttachChip").innerHTML = html;
+  document.getElementById("studentAttachChip").innerHTML = html;
+  document.getElementById("briefFollowAttachChip").innerHTML = html;
   document.querySelectorAll(".attach-chip-remove").forEach(btn => {
-    btn.addEventListener("click", () => { clearAttachment(); updateSendStates(); updateDraftChatSendState(); });
+    btn.addEventListener("click", () => { clearAttachment(); updateSendStates(); updateDraftChatSendState(); updateStudentSendState(); updateBriefSendState(); });
   });
 }
 
