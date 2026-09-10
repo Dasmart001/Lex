@@ -19,7 +19,14 @@ export default async function handler(req, res) {
   }
 
   const model = process.env.GEMINI_MODEL || "gemini-3.6-flash";
-  const { system, messages, useSearch, stream } = req.body || {};
+  const { system, messages, useSearch, stream, reasoningEffort } = req.body || {};
+  // "high" spends more of Gemini's thinking budget on genuine multi-step
+  // legal reasoning (issue-spotting, weighing authority, checking its own
+  // conclusion against the sources it found) before it writes the answer.
+  // "low" is for tasks that are mostly format compliance, not reasoning
+  // (e.g. flashcard/quiz JSON generation), where a big thinking budget
+  // mostly just burns quota without improving the output.
+  const thinkingLevel = reasoningEffort === "high" ? "high" : "low";
 
   // Nudges Gemini's own search queries toward authoritative Nigerian legal
   // sources first. Gemini's grounding tool has no hard domain allowlist —
@@ -113,7 +120,7 @@ Never state a case name, citation, section number, or holding as fact unless it 
           ...baseConfig,
           generationConfig: {
             maxOutputTokens: 8192,
-            thinkingConfig: { includeThoughts: true, thinkingLevel: "low" },
+            thinkingConfig: { includeThoughts: true, thinkingLevel },
           },
         }),
       });
@@ -209,7 +216,7 @@ Never state a case name, citation, section number, or holding as fact unless it 
       ...baseConfig,
       generationConfig: {
         maxOutputTokens: 8192,
-        thinkingConfig: { includeThoughts: true, thinkingLevel: "low" },
+        thinkingConfig: { includeThoughts: true, thinkingLevel },
       },
     });
 
@@ -278,4 +285,5 @@ Never state a case name, citation, section number, or holding as fact unless it 
       error: String(err),
     });
   }
-        }
+}
+               
