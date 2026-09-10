@@ -38,16 +38,18 @@
   .app{ display:flex; height:100dvh; width:100%; overflow:hidden; position:relative; }
 
   /* ================= SIDEBAR (Claude-style) ================= */
-  .sidebar{ width:264px; flex-shrink:0; background:var(--bg); border-right:1px solid var(--line); display:flex; flex-direction:column; height:100%; overflow:hidden; transition:width .2s ease, border-color .2s ease, opacity .15s ease; }
-  @media(min-width:821px){
-    .sidebar.closed{ width:0; border-right-color:transparent; opacity:0; }
-    .sidebar.closed > *{ pointer-events:none; }
+  .sidebar{
+    position:fixed; left:0; top:0; z-index:30; width:264px; height:100%; flex-shrink:0;
+    background:var(--bg); border-right:1px solid var(--line); display:flex; flex-direction:column; overflow:hidden;
+    transform:translateX(-100%); transition:transform .2s cubic-bezier(.22,1,.36,1);
+    box-shadow:4px 0 18px rgba(0,0,0,0.15);
   }
+  .sidebar.open{ transform:translateX(0); }
 
   .sb-head{ display:flex; align-items:center; justify-content:space-between; padding:18px 14px 12px 16px; }
   .sb-brand{ display:flex; align-items:center; gap:10px; }
   .logo-mark{ width:26px; height:26px; flex-shrink:0; color:var(--ink); }
-  .sb-brand .mark{ font-family:'Libre Caslon Text',serif; font-style:italic; font-size:18px; }
+  .sb-brand .mark{ font-family:'Libre Caslon Text',serif; font-style:normal; font-size:18px; }
   .sb-head-icons{ display:flex; gap:2px; }
   .icon-btn{ background:transparent; border:none; color:var(--ink); cursor:pointer; padding:7px; border-radius:6px; display:flex; }
   .icon-btn.active{ background:var(--ink); color:var(--inv); }
@@ -200,11 +202,17 @@
   .topbar.scrolled{ border-bottom-color:var(--line); }
   .menu-btn{ display:none; }
   .thread-title{ font-family:'Public Sans',sans-serif; font-style:normal; font-weight:600; font-size:15px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .new-chat-btn{
+    width:29px; height:29px; border-radius:50%; background:var(--ink); color:var(--inv); border:none; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; transition:opacity .12s, transform .12s cubic-bezier(.34,1.56,.64,1);
+  }
+  .new-chat-btn:hover{ opacity:.82; }
+  .new-chat-btn:active{ transform:scale(0.88); }
   .badge{ margin-left:auto; font-family:'Space Mono',monospace; font-size:10px; color:var(--dim); border:1px solid var(--line); padding:4px 9px; flex-shrink:0; border-radius:5px; }
 
   /* ---- HOME ---- */
-  .home{ flex:1; overflow-y:auto; display:flex; flex-direction:column; align-items:center; padding:8vh 20px 40px 20px; }
-  .home-inner{ width:100%; max-width:640px; margin-top:auto; margin-bottom:auto; }
+  .home{ flex:1; overflow-y:auto; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px 20px 40px 20px; }
+  .home-inner{ width:100%; max-width:640px; }
 
   .home-greeting{ display:flex; align-items:center; justify-content:center; gap:14px; margin-bottom:28px; flex-wrap:wrap; }
   .home-mark-icon{ flex-shrink:0; }
@@ -255,12 +263,36 @@
   .chip-row-center{ display:flex; justify-content:center; margin-top:9px; }
   .chip{
     display:flex; align-items:center; gap:6px; padding:9px 14px; border:1px solid var(--line); border-radius:14px;
-    font-size:14px; font-weight:500; color:var(--dim); cursor:pointer; background:var(--bg); transition:border-color .12s, color .12s, background .12s;
+    font-size:14px; font-weight:500; color:var(--dim); cursor:pointer; background:var(--bg); transition:border-color .12s, color .12s, background .12s, transform .12s cubic-bezier(.34,1.56,.64,1);
   }
   .chip:hover{ border-color:var(--ink); color:var(--ink); background:var(--hover); }
+  .chip:active{ transform:scale(0.95); }
   .chip svg{ flex-shrink:0; }
   .chip.pick{ color:var(--dim); }
   .chip.pick svg{ color:var(--faint); }
+  .chip.on{ background:var(--ink); border-color:var(--ink); color:var(--inv); }
+
+  /* ---- category template panel: opens under the category chips, lets you
+     pick a starter template instead of firing a hardcoded prompt straight
+     into the chat. Selecting a row fills the composer (editable, cursor
+     dropped into the first [placeholder]) rather than sending anything. ---- */
+  .template-panel{
+    width:100%; max-width:640px; display:none; flex-direction:column; gap:8px; margin-top:14px;
+  }
+  .template-panel.open{ display:flex; animation:tpl-panel-in .18s cubic-bezier(.22,1,.36,1) both; }
+  @keyframes tpl-panel-in{ from{ opacity:0; transform:translateY(-5px); } to{ opacity:1; transform:translateY(0); } }
+  .template-row{
+    display:flex; align-items:center; justify-content:space-between; gap:14px; width:100%;
+    padding:12px 15px; border:1px solid var(--line); border-radius:12px; background:var(--bg);
+    cursor:pointer; font-family:'Public Sans',sans-serif; font-size:13.5px; color:var(--dim); text-align:left;
+    transition:border-color .12s, background .12s, color .12s, transform .1s cubic-bezier(.34,1.56,.64,1);
+  }
+  .template-row:hover{ border-color:var(--ink); background:var(--hover); color:var(--ink); }
+  .template-row:active{ transform:scale(0.99); }
+  .template-row-text{ flex:1; line-height:1.45; }
+  .template-row-text .tpl-placeholder{ color:var(--ink); font-weight:600; text-decoration:underline dotted; text-underline-offset:2px; }
+  .template-row-arrow{ flex-shrink:0; color:var(--faint); display:flex; transition:transform .12s, color .12s; }
+  .template-row:hover .template-row-arrow{ transform:translateX(2px); color:var(--ink); }
   .persist-disclaimer{ text-align:center; font-size:11px; color:var(--faint); margin-top:16px; }
 
   /* ---- drafting mode: setup wizard ---- */
@@ -472,7 +504,7 @@
 
   .assistant-label{ display:flex; align-items:center; gap:7px; margin-bottom:10px; }
   .assistant-mark{ flex-shrink:0; transition:opacity .15s; }
-  .assistant-mark.thinking{ animation:gavelStrike 1.35s cubic-bezier(.45,0,.2,1) infinite; transform-origin:30% 88%; }
+  .assistant-mark.thinking .gavel-swing{ animation:gavelStrike 1.35s cubic-bezier(.45,0,.2,1) infinite; }
   .assistant-name{ font-family:'Space Mono',monospace; font-size:10.5px; color:var(--faint); letter-spacing:.05em; text-transform:uppercase; }
 
   .answer{ font-size:15px; line-height:1.75; -webkit-touch-callout:none; }
@@ -509,7 +541,13 @@
 
   .thinking-row{ display:flex; align-items:center; gap:12px; padding:6px 0 22px 0; }
   .gavel-loader{ width:18px; height:18px; color:var(--ink); flex-shrink:0; }
-  .gavel-loader svg{ display:block; animation:gavelStrike 1.35s cubic-bezier(.45,0,.2,1) infinite; transform-origin:30% 88%; }
+  .gavel-loader svg{ display:block; }
+  .gavel-loader svg .gavel-swing{ animation:gavelStrike 1.35s cubic-bezier(.45,0,.2,1) infinite; }
+  /* The swinging g has no static rotation of its own — it wraps the head+handle
+     g (which keeps its resting-angle rotate() attribute) and pivots around the
+     hinge point where the handle meets the fixed base block, so only the
+     hammer moves and the base line never shifts. */
+  .gavel-swing{ transform-box:view-box; transform-origin:18px 15px; }
   @keyframes gavelStrike{
     0%{ transform:rotate(-16deg); }
     14%{ transform:rotate(9deg); }
@@ -593,7 +631,7 @@
     justify-content:center; color:var(--ink); flex-shrink:0;
   }
   .voice-orb.listening{ animation:voiceListenPulse 1.6s ease-in-out infinite; }
-  .voice-orb.thinking svg{ animation:gavelStrike 1.1s cubic-bezier(.45,0,.2,1) infinite; transform-origin:30% 88%; }
+  .voice-orb.thinking svg .gavel-swing{ animation:gavelStrike 1.1s cubic-bezier(.45,0,.2,1) infinite; }
   .voice-orb.speaking{ animation:voiceSpeakPulse .5s ease-in-out infinite alternate; }
   @keyframes voiceListenPulse{ 0%,100%{ box-shadow:0 0 0 0 rgba(0,0,0,0.12); } 50%{ box-shadow:0 0 0 14px rgba(0,0,0,0); } }
   @keyframes voiceSpeakPulse{ from{ transform:scale(1); } to{ transform:scale(1.05); } }
@@ -609,8 +647,7 @@
   .voice-hint{ font-size:11.5px; color:var(--faint); }
 
   @media(max-width:820px){
-    .sidebar{ position:fixed; left:0; top:0; z-index:30; transform:translateX(-100%); transition:transform .2s ease; width:82vw; max-width:300px; height:100%; box-shadow:4px 0 18px rgba(0,0,0,0.15); }
-    .sidebar.open{ transform:translateX(0); }
+    .sidebar{ width:82vw; max-width:300px; }
     .menu-btn{ display:flex; }
     .topbar{ padding:13px 16px; }
     .home{ padding:20px 16px 24px 16px; }
@@ -636,10 +673,10 @@
     <div class="sb-head">
       <div class="sb-brand">
         <svg class="logo-mark" viewBox="0 0 36 36" fill="currentColor">
-          <g transform="rotate(-38 18 15)">
+          <g class="gavel-swing"><g transform="rotate(-38 18 15)">
             <rect x="9" y="4" width="17" height="8" rx="2.6"/>
             <rect x="14.7" y="12" width="5.6" height="17" rx="2.6"/>
-          </g>
+          </g></g>
           <rect x="5" y="29.5" width="15" height="4.2" rx="2.1"/>
         </svg>
         <span class="mark">LexAI</span>
@@ -740,10 +777,10 @@
 
     <div class="voice-orb" id="voiceOrb">
       <svg width="34" height="34" viewBox="0 0 36 36" fill="currentColor" id="voiceOrbIcon">
-        <g transform="rotate(-38 18 15)">
+        <g class="gavel-swing"><g transform="rotate(-38 18 15)">
           <rect x="9" y="4" width="17" height="8" rx="2.6"/>
           <rect x="14.7" y="12" width="5.6" height="17" rx="2.6"/>
-        </g>
+        </g></g>
         <rect x="5" y="29.5" width="15" height="4.2" rx="2.1"/>
       </svg>
     </div>
@@ -799,11 +836,8 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
       <div class="thread-title" id="threadTitle"></div>
-      <button class="icon-btn" id="topNewBtn" title="New">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      </button>
-      <button class="icon-btn" id="voiceModeBtn" title="Voice conversation">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
+      <button class="new-chat-btn" id="topNewBtn" title="New chat">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       </button>
       <div class="badge">Lex 1.0</div>
     </div>
@@ -813,10 +847,10 @@
       <div class="home-inner">
         <div class="home-greeting">
           <svg width="26" height="26" viewBox="0 0 36 36" fill="currentColor" class="home-mark-icon">
-            <g transform="rotate(-38 18 15)">
+            <g class="gavel-swing"><g transform="rotate(-38 18 15)">
               <rect x="9" y="4" width="17" height="8" rx="2.6"/>
               <rect x="14.7" y="12" width="5.6" height="17" rx="2.6"/>
-            </g>
+            </g></g>
             <rect x="5" y="29.5" width="15" height="4.2" rx="2.1"/>
           </svg>
           <span class="home-title serif" id="homeTitle"></span>
@@ -837,9 +871,12 @@
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
               </button>
               <button class="voice-btn" id="homeVoiceBtn" title="Voice input">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="10" x2="5" y2="14"/><line x1="9" y1="6" x2="9" y2="18"/><line x1="13" y1="3" x2="13" y2="21"/><line x1="17" y1="7" x2="17" y2="17"/><line x1="21" y1="10" x2="21" y2="14"/></svg>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
               </button>
-              <button class="send-btn" id="homeSendBtn" disabled>
+              <button class="send-btn" id="homeVoiceModeBtn" title="Voice conversation">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="10" x2="5" y2="14"/><line x1="9" y1="6" x2="9" y2="18"/><line x1="13" y1="3" x2="13" y2="21"/><line x1="17" y1="7" x2="17" y2="17"/><line x1="21" y1="10" x2="21" y2="14"/></svg>
+              </button>
+              <button class="send-btn" id="homeSendBtn" disabled style="display:none;">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
               </button>
             </div>
@@ -847,6 +884,7 @@
         </div>
 
         <div class="chip-row" id="suggestionGrid"></div>
+        <div class="template-panel" id="templatePanel"></div>
         <div class="chip-row-center" id="suggestionPick"></div>
         <div class="persist-disclaimer">Lex is AI and can make mistakes. Verify citations before relying on them.</div>
       </div>
@@ -874,9 +912,12 @@
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
               </button>
               <button class="voice-btn" id="followVoiceBtn" title="Voice input">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="10" x2="5" y2="14"/><line x1="9" y1="6" x2="9" y2="18"/><line x1="13" y1="3" x2="13" y2="21"/><line x1="17" y1="7" x2="17" y2="17"/><line x1="21" y1="10" x2="21" y2="14"/></svg>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
               </button>
-              <button class="send-btn" id="followSendBtn" disabled>
+              <button class="send-btn" id="followVoiceModeBtn" title="Voice conversation">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="10" x2="5" y2="14"/><line x1="9" y1="6" x2="9" y2="18"/><line x1="13" y1="3" x2="13" y2="21"/><line x1="17" y1="7" x2="17" y2="17"/><line x1="21" y1="10" x2="21" y2="14"/></svg>
+              </button>
+              <button class="send-btn" id="followSendBtn" disabled style="display:none;">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
               </button>
             </div>
@@ -892,10 +933,10 @@
       <div class="home-inner">
         <div class="home-greeting">
           <svg width="26" height="26" viewBox="0 0 36 36" fill="currentColor" class="home-mark-icon">
-            <g transform="rotate(-38 18 15)">
+            <g class="gavel-swing"><g transform="rotate(-38 18 15)">
               <rect x="9" y="4" width="17" height="8" rx="2.6"/>
               <rect x="14.7" y="12" width="5.6" height="17" rx="2.6"/>
-            </g>
+            </g></g>
             <rect x="5" y="29.5" width="15" height="4.2" rx="2.1"/>
           </svg>
           <span class="home-title serif">What are we drafting today?</span>
@@ -962,10 +1003,10 @@
         <div class="library-head">
           <div class="home-greeting">
             <svg width="24" height="24" viewBox="0 0 36 36" fill="currentColor" class="home-mark-icon">
-              <g transform="rotate(-38 18 15)">
+              <g class="gavel-swing"><g transform="rotate(-38 18 15)">
                 <rect x="9" y="4" width="17" height="8" rx="2.6"/>
                 <rect x="14.7" y="12" width="5.6" height="17" rx="2.6"/>
-              </g>
+              </g></g>
               <rect x="5" y="29.5" width="15" height="4.2" rx="2.1"/>
             </svg>
             <span class="home-title serif" style="font-size:21px;">Study library</span>
@@ -1193,13 +1234,62 @@ How you respond:
 - Never fabricate a citation, case name, or section number. If you are not confident one exists, say so plainly rather than inventing one.
 - Keep tone warm, polished, and professional — direct and useful to a working lawyer, skipping filler and disclaimers except where a real ambiguity or risk exists.
 - Use examples where they clarify a rule or distinction, but avoid unnecessary verbosity — every sentence should earn its place.
-- End answers that touch on a live legal decision with a brief, plain note that this is research assistance, not a substitute for independent verification and professional judgment.`;
+- End answers that touch on a live legal decision with a brief, plain note that this is research assistance, not a substitute for independent verification and professional judgment.
 
+Identity: if asked who built, owns, created, or is behind LexAI (or who made "Lex"), answer plainly that LexAI was built by Dasmart. Don't mention the underlying model or API provider unless directly and specifically asked about the technology stack.`;
+
+// Each category's icon is drawn from the same geometric language as the
+// Lex brand mark (rotated, rounded rectangles) instead of a generic icon-kit
+// glyph — "Cases" reuses the literal gavel mark since it already reads as
+// a courtroom symbol. Each category offers several starter *templates*
+// with [bracketed] slots rather than one hardcoded question, so clicking
+// a chip opens a picker instead of firing a fixed prompt straight to chat.
 const CATEGORIES = [
-  { icon: `<path d="M12 6.5c-1.4-1-3-1.5-5-1.5-1 0-2 .15-2.5.35v13c.5-.2 1.5-.35 2.5-.35 2 0 3.6.5 5 1.5m0-13c1.4-1 3-1.5 5-1.5 1 0 2 .15 2.5.35v13c-.5-.2-1.5-.35-2.5-.35-2 0-3.6.5-5 1.5m0-13v13"/>`, label: "Explain", prompt: "Explain ratio decidendi vs obiter dicta with an example" },
-  { icon: `<path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/><line x1="16" y1="8" x2="2" y2="22"/><line x1="17.5" y1="15" x2="9" y2="15"/>`, label: "Draft", prompt: "Draft a standard confidentiality clause for an NDA" },
-  { icon: `<line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 20 7 4 7"/>`, label: "Cases", prompt: "Summarize the rule in Carlill v Carbolic Smoke Ball Co." },
-  { icon: `<path d="M8 21h12a2 2 0 0 0 2-2v-2H10v2a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v3h4"/><path d="M19 17V5a2 2 0 0 0-2-2H4"/><path d="M15 8h-5"/><path d="M15 12h-5"/>`, label: "Rules", prompt: "Statement of Claim vs Statement of Defence — the difference" },
+  {
+    id: "explain",
+    label: "Explain",
+    icon: `<g transform="rotate(-8 12 12)"><rect x="3" y="5" width="8" height="14" rx="2.2"/></g><g transform="rotate(8 12 12)"><rect x="13" y="5" width="8" height="14" rx="2.2"/></g>`,
+    templates: [
+      "Explain [legal concept] in plain terms, with an example",
+      "What's the difference between [term A] and [term B]?",
+      "Break down the elements of [a cause of action / doctrine]",
+      "Explain [ratio decidendi / obiter dicta / a legal maxim] and how it's used",
+    ],
+  },
+  {
+    id: "draft",
+    label: "Draft",
+    icon: `<g transform="rotate(45 12 12)"><rect x="9" y="2" width="6" height="16" rx="3"/></g><circle cx="7" cy="19" r="2.4"/>`,
+    templates: [
+      "Draft a [type of clause] for a [type of agreement]",
+      "Draft a demand letter regarding [situation]",
+      "Draft a [pleading / notice / motion] for [matter]",
+      "Draft a cease-and-desist letter for [issue]",
+    ],
+  },
+  {
+    id: "cases",
+    label: "Cases",
+    iconViewBox: "0 0 36 36",
+    icon: `<g class="gavel-swing"><g transform="rotate(-38 18 15)"><rect x="9" y="4" width="17" height="8" rx="2.6"/><rect x="14.7" y="12" width="5.6" height="17" rx="2.6"/></g></g><rect x="5" y="29.5" width="15" height="4.2" rx="2.1"/>`,
+    templates: [
+      "Summarize the rule in [case name]",
+      "Find the ratio decidendi of [case name]",
+      "Compare [case A] and [case B] on [issue]",
+      "What precedent governs [legal issue]?",
+    ],
+  },
+  {
+    id: "rules",
+    label: "Rules",
+    icon: `<rect x="4" y="3" width="16" height="18" rx="2.4" opacity="0.15"/><rect x="7" y="8" width="10" height="2.2" rx="1.1"/><rect x="7" y="12.4" width="10" height="2.2" rx="1.1"/><rect x="7" y="16.8" width="7" height="2.2" rx="1.1"/>`,
+    templates: [
+      "What's the procedure for [action] under [rule / act]?",
+      "Statement of Claim vs Statement of Defence — the difference",
+      "What are the requirements for filing [document]?",
+      "Explain [Order/Rule number] of [Rules of Court]",
+    ],
+  },
 ];
 
 const LEX_PICKS = [
@@ -1458,24 +1548,102 @@ function formatAnswer(text){
   return html;
 }
 
+let activeSuggestCategory = null;
+
 function renderSuggestions(){
   const row = document.getElementById("suggestionGrid");
   row.innerHTML = "";
   CATEGORIES.forEach(c => {
     const chip = document.createElement("div");
-    chip.className = "chip";
-    chip.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${c.icon}</svg><span>${c.label}</span>`;
-    chip.addEventListener("click", () => startResearch(c.prompt));
+    chip.className = "chip" + (activeSuggestCategory === c.id ? " on" : "");
+    chip.innerHTML = `<svg width="15" height="15" viewBox="${c.iconViewBox || "0 0 24 24"}" fill="currentColor">${c.icon}</svg><span>${c.label}</span>`;
+    chip.addEventListener("click", () => toggleSuggestCategory(c.id));
     row.appendChild(chip);
   });
+
+  renderTemplatePanel();
 
   const pick = document.getElementById("suggestionPick");
   pick.innerHTML = "";
   const pickChip = document.createElement("div");
   pickChip.className = "chip pick";
-  pickChip.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l1.9 5.8L20 11l-6.1 2.2L12 19l-1.9-5.8L4 11l6.1-2.2z"/></svg><span>Lex's pick</span>`;
-  pickChip.addEventListener("click", () => startResearch(LEX_PICKS[Math.floor(Math.random() * LEX_PICKS.length)]));
+  pickChip.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c.4 3.2 1 5.4 1.8 6.6 1.2 1.8 3.4 2.4 6.6 2.8-3.2.4-5.4 1-6.6 1.8-1.8 1.2-2.4 3.4-2.8 6.6-.4-3.2-1-5.4-1.8-6.6-1.2-1.8-3.4-2.4-6.6-2.8 3.2-.4 5.4-1 6.6-1.8 1.8-1.2 2.4-3.4 2.8-6.6z"/></svg><span>Lex's pick</span>`;
+  pickChip.addEventListener("click", () => {
+    activeSuggestCategory = null;
+    renderSuggestions();
+    insertTemplate(LEX_PICKS[Math.floor(Math.random() * LEX_PICKS.length)]);
+  });
   pick.appendChild(pickChip);
+}
+
+// Toggling a category never sends anything — it just opens/closes the row
+// of starter templates underneath it (click again, or pick one, to close).
+function toggleSuggestCategory(id){
+  activeSuggestCategory = (activeSuggestCategory === id) ? null : id;
+  renderSuggestions();
+}
+
+function renderTemplatePanel(){
+  const panel = document.getElementById("templatePanel");
+  if(!activeSuggestCategory){
+    panel.classList.remove("open");
+    panel.innerHTML = "";
+    return;
+  }
+  const cat = CATEGORIES.find(c => c.id === activeSuggestCategory);
+  panel.classList.add("open");
+  panel.innerHTML = cat.templates.map(t => `
+    <button type="button" class="template-row">
+      <span class="template-row-text">${highlightPlaceholders(escapeHtml(t))}</span>
+      <span class="template-row-arrow"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+    </button>`).join("");
+  panel.querySelectorAll(".template-row").forEach((el, i) => {
+    el.addEventListener("click", () => {
+      activeSuggestCategory = null;
+      renderSuggestions();
+      insertTemplate(cat.templates[i]);
+    });
+  });
+}
+
+function highlightPlaceholders(escapedText){
+  return escapedText.replace(/\[[^\]]+\]/g, m => `<span class="tpl-placeholder">${m}</span>`);
+}
+
+// Drops the template text into the home composer — editable, not sent.
+// If it has a [placeholder], that slot is pre-selected so the first
+// keystroke replaces it, like a snippet tab-stop; Tab cycles to the next one.
+function insertTemplate(text){
+  const el = document.getElementById("homeInput");
+  el.value = text;
+  autoGrow(el);
+  updateSendStates();
+  selectFirstPlaceholder(el);
+}
+
+function selectFirstPlaceholder(el){
+  el.focus();
+  const m = /\[[^\]]+\]/.exec(el.value);
+  if(m){
+    el.setSelectionRange(m.index + 1, m.index + m[0].length - 1);
+  } else {
+    el.setSelectionRange(el.value.length, el.value.length);
+  }
+}
+
+function selectNextPlaceholder(el){
+  const from = el.selectionEnd || 0;
+  let m = /\[[^\]]+\]/.exec(el.value.slice(from));
+  if(m){
+    el.setSelectionRange(from + m.index + 1, from + m.index + m[0].length - 1);
+    return true;
+  }
+  m = /\[[^\]]+\]/.exec(el.value);
+  if(m){
+    el.setSelectionRange(m.index + 1, m.index + m[0].length - 1);
+    return true;
+  }
+  return false;
 }
 
 function renderThreadList(){
@@ -1555,7 +1723,7 @@ function renderThreadInner(){
         </div>`;
     } else {
       row.className = "msg-row assistant";
-      let inner = `<div class="assistant-label"><svg width="13" height="13" viewBox="0 0 36 36" fill="currentColor" class="assistant-mark${m.streaming ? ' thinking' : ''}"><g transform="rotate(-38 18 15)"><rect x="9" y="4" width="17" height="8" rx="2.6"/><rect x="14.7" y="12" width="5.6" height="17" rx="2.6"/></g><rect x="5" y="29.5" width="15" height="4.2" rx="2.1"/></svg><span class="assistant-name">LexAI</span></div>`;
+      let inner = `<div class="assistant-label"><svg width="13" height="13" viewBox="0 0 36 36" fill="currentColor" class="assistant-mark${m.streaming ? ' thinking' : ''}"><g class="gavel-swing"><g transform="rotate(-38 18 15)"><rect x="9" y="4" width="17" height="8" rx="2.6"/><rect x="14.7" y="12" width="5.6" height="17" rx="2.6"/></g></g><rect x="5" y="29.5" width="15" height="4.2" rx="2.1"/></svg><span class="assistant-name">LexAI</span></div>`;
       if(m.streaming || m.thinking){
         inner += renderThinkBlockHtml(i, m.thinking, !!m.streaming, m.thinkSeconds);
       }
@@ -1585,7 +1753,7 @@ function renderThreadInner(){
   if(loading && !(lastMsg && lastMsg.role === "assistant" && lastMsg.streaming)){
     const row = document.createElement("div");
     row.className = "thinking-row";
-    row.innerHTML = `<div class="gavel-loader"><svg viewBox="0 0 36 36" fill="currentColor"><g transform="rotate(-32 18 15)"><rect x="9" y="4" width="17" height="8" rx="2.6"/><rect x="14.7" y="12" width="5.6" height="17" rx="2.6"/></g><rect x="5" y="29.5" width="15" height="4.2" rx="2.1"/></svg></div><div class="thinking-label">Reasoning…</div>`;
+    row.innerHTML = `<div class="gavel-loader"><svg viewBox="0 0 36 36" fill="currentColor"><g class="gavel-swing"><g transform="rotate(-32 18 15)"><rect x="9" y="4" width="17" height="8" rx="2.6"/><rect x="14.7" y="12" width="5.6" height="17" rx="2.6"/></g></g><rect x="5" y="29.5" width="15" height="4.2" rx="2.1"/></svg></div><div class="thinking-label">Reasoning…</div>`;
     wrap.appendChild(row);
   }
   document.getElementById("threadView").scrollTop = document.getElementById("threadView").scrollHeight;
@@ -2277,8 +2445,15 @@ async function followUp(text){
 }
 
 function updateSendStates(){
-  document.getElementById("homeSendBtn").disabled = (!document.getElementById("homeInput").value.trim() && !pendingAttachment) || loading;
-  document.getElementById("followSendBtn").disabled = (!document.getElementById("followInput").value.trim() && !pendingAttachment) || loading;
+  const homeHasContent = !!(document.getElementById("homeInput").value.trim() || pendingAttachment);
+  document.getElementById("homeSendBtn").style.display = homeHasContent ? "flex" : "none";
+  document.getElementById("homeSendBtn").disabled = loading;
+  document.getElementById("homeVoiceModeBtn").style.display = homeHasContent ? "none" : "flex";
+
+  const followHasContent = !!(document.getElementById("followInput").value.trim() || pendingAttachment);
+  document.getElementById("followSendBtn").style.display = followHasContent ? "flex" : "none";
+  document.getElementById("followSendBtn").disabled = loading;
+  document.getElementById("followVoiceModeBtn").style.display = followHasContent ? "none" : "flex";
 }
 
 function autoGrow(el){
@@ -2292,7 +2467,15 @@ const followInput = document.getElementById("followInput");
 homeInput.addEventListener("input", () => { autoGrow(homeInput); updateSendStates(); });
 followInput.addEventListener("input", () => { autoGrow(followInput); updateSendStates(); });
 
-homeInput.addEventListener("keydown", e => { if(e.key === "Enter" && !e.shiftKey){ e.preventDefault(); startResearch(homeInput.value); } });
+homeInput.addEventListener("keydown", e => {
+  if(e.key === "Enter" && !e.shiftKey){ e.preventDefault(); startResearch(homeInput.value); return; }
+  // Tab jumps to the next [placeholder] left by an inserted template
+  // instead of leaving the field, so filling one in feels like a snippet.
+  if(e.key === "Tab" && /\[[^\]]+\]/.test(homeInput.value)){
+    e.preventDefault();
+    selectNextPlaceholder(homeInput);
+  }
+});
 followInput.addEventListener("keydown", e => { if(e.key === "Enter" && !e.shiftKey){ e.preventDefault(); followUp(followInput.value); } });
 
 document.getElementById("homeSendBtn").addEventListener("click", () => startResearch(homeInput.value));
@@ -2317,38 +2500,15 @@ const sidebar = document.getElementById("sidebar");
 const backdrop = document.getElementById("backdrop");
 function isDesktop(){ return window.innerWidth > 820; }
 
-function openSidebarMobile(){ sidebar.classList.remove("closed"); sidebar.classList.add("open"); backdrop.classList.add("show"); }
+// Sidebar is an overlay on every screen size now — it slides in on top of
+// the chat (with a dimming backdrop) rather than pushing the chat over.
+function openSidebarMobile(){ sidebar.classList.add("open"); backdrop.classList.add("show"); }
 function closeSidebarMobile(){ sidebar.classList.remove("open"); backdrop.classList.remove("show"); }
-function closeSidebarAny(){ if(isDesktop()){ /* leave desktop state as-is on nav */ } else { closeSidebarMobile(); } }
+function closeSidebarAny(){ closeSidebarMobile(); }
 
 function toggleSidebar(){
-  if(isDesktop()){
-    sidebar.classList.toggle("closed");
-  } else {
-    if(sidebar.classList.contains("open")) closeSidebarMobile(); else openSidebarMobile();
-  }
+  if(sidebar.classList.contains("open")) closeSidebarMobile(); else openSidebarMobile();
 }
-
-// Sidebar starts closed on desktop (opened only via the toggle icon);
-// on mobile it's already off-canvas by default via CSS transform.
-if(isDesktop()) sidebar.classList.add("closed");
-
-let wasDesktop = isDesktop();
-window.addEventListener("resize", () => {
-  const nowDesktop = isDesktop();
-  if(nowDesktop === wasDesktop) return;
-  wasDesktop = nowDesktop;
-  if(nowDesktop){
-    // Entering desktop width: any mobile overlay state is meaningless here.
-    closeSidebarMobile();
-  } else {
-    // Entering mobile width: a stale "closed" (desktop-collapsed) class
-    // would otherwise sit dormant and do nothing today, but there's no
-    // reason to leave it — keep the sidebar in its default off-canvas
-    // mobile state instead.
-    sidebar.classList.remove("closed");
-  }
-});
 
 document.getElementById("openMenuBtn").addEventListener("click", toggleSidebar);
 document.getElementById("menuBtn").addEventListener("click", toggleSidebar);
@@ -2512,7 +2672,8 @@ function speakVoiceReply(text){
   speechSynthesis.speak(utter);
 }
 
-document.getElementById("voiceModeBtn").addEventListener("click", openVoiceMode);
+document.getElementById("homeVoiceModeBtn").addEventListener("click", openVoiceMode);
+document.getElementById("followVoiceModeBtn").addEventListener("click", openVoiceMode);
 document.getElementById("voiceCloseBtn").addEventListener("click", closeVoiceMode);
 voiceMicBtn.addEventListener("click", () => {
   if(voiceState === "listening"){
@@ -2539,7 +2700,8 @@ Rules:
 - After the complete document, add a line containing exactly ---NOTES--- followed by a short list of the placeholders used and any important assumptions or considerations. Keep notes concise.
 - The conversation history may include earlier drafts and revision requests. When the person asks for a change, apply it while preserving the rest of the document, and output the FULL revised document again in the same format (document, then ---NOTES---, then notes) — never a partial diff or just the changed clause.
 - If a reference document is attached, use it as a model for structure, tone, and clause style where appropriate, and pull in any concrete facts it contains (names, dates, amounts) instead of placeholders — but still flag in the notes anything you carried over from the reference that the user should double-check.
-- If the person is just asking a question about the draft (not requesting a change), answer conversationally and do not repeat the whole document.`;
+- If the person is just asking a question about the draft (not requesting a change), answer conversationally and do not repeat the whole document.
+- If asked who built, owns, created, or is behind LexAI, answer plainly that LexAI was built by Dasmart.`;
 
 function newDraft(){
   const d = { id: uid(), title: "New draft", messages: [] };
@@ -2630,7 +2792,7 @@ function renderDraftChatInner(){
         </div>`;
     } else {
       row.className = "msg-row assistant";
-      let inner = `<div class="assistant-label"><svg width="13" height="13" viewBox="0 0 36 36" fill="currentColor" class="assistant-mark${m.streaming ? ' thinking' : ''}"><g transform="rotate(-38 18 15)"><rect x="9" y="4" width="17" height="8" rx="2.6"/><rect x="14.7" y="12" width="5.6" height="17" rx="2.6"/></g><rect x="5" y="29.5" width="15" height="4.2" rx="2.1"/></svg><span class="assistant-name">LexAI</span></div>`;
+      let inner = `<div class="assistant-label"><svg width="13" height="13" viewBox="0 0 36 36" fill="currentColor" class="assistant-mark${m.streaming ? ' thinking' : ''}"><g class="gavel-swing"><g transform="rotate(-38 18 15)"><rect x="9" y="4" width="17" height="8" rx="2.6"/><rect x="14.7" y="12" width="5.6" height="17" rx="2.6"/></g></g><rect x="5" y="29.5" width="15" height="4.2" rx="2.1"/></svg><span class="assistant-name">LexAI</span></div>`;
       if(m.streaming || m.thinking){
         inner += renderThinkBlockHtml(i, m.thinking, !!m.streaming, m.thinkSeconds);
       }
@@ -2678,7 +2840,7 @@ function renderDraftChatInner(){
   if(loading && !(lastMsg && lastMsg.role === "assistant" && lastMsg.streaming)){
     const row = document.createElement("div");
     row.className = "thinking-row";
-    row.innerHTML = `<div class="gavel-loader"><svg viewBox="0 0 36 36" fill="currentColor"><g transform="rotate(-32 18 15)"><rect x="9" y="4" width="17" height="8" rx="2.6"/><rect x="14.7" y="12" width="5.6" height="17" rx="2.6"/></g><rect x="5" y="29.5" width="15" height="4.2" rx="2.1"/></svg></div><div class="thinking-label">Thinking…</div>`;
+    row.innerHTML = `<div class="gavel-loader"><svg viewBox="0 0 36 36" fill="currentColor"><g class="gavel-swing"><g transform="rotate(-32 18 15)"><rect x="9" y="4" width="17" height="8" rx="2.6"/><rect x="14.7" y="12" width="5.6" height="17" rx="2.6"/></g></g><rect x="5" y="29.5" width="15" height="4.2" rx="2.1"/></svg></div><div class="thinking-label">Thinking…</div>`;
     wrap.appendChild(row);
   }
   document.getElementById("draftView").scrollTop = document.getElementById("draftView").scrollHeight;
@@ -2861,7 +3023,8 @@ Rules:
 - If the student is clearly stuck, guessing wildly, or explicitly asks for the answer outright, give a brief, clear explanation of that specific step — then continue guiding from there rather than dumping the rest of the topic.
 - Adapt depth and pace to the student's responses: move faster if they're getting it, slow down and simplify if they're not.
 - Stay accurate. Never fabricate case names, citations, or section numbers — if uncertain, say so plainly and reason from the general principle instead.
-- Keep tone warm, encouraging, and patient — this is a study partner, not an exam.`;
+- Keep tone warm, encouraging, and patient — this is a study partner, not an exam.
+- If asked who built, owns, created, or is behind LexAI, answer plainly that LexAI was built by Dasmart.`;
 
 function tutorSystemPrompt(depth){
   const d = depth || "100-level law student";
@@ -2883,7 +3046,8 @@ On later turns:
 Accuracy rules:
 - If you are not confident of the real facts, citation, or holding of the named case, say so plainly rather than inventing them. Offer to proceed with a hypothetical version of the fact pattern instead, or ask the student to paste the judgment text so you can work from that directly.
 - Never fabricate a citation.
-- Keep each message short — one step at a time, not a lecture.`;
+- Keep each message short — one step at a time, not a lecture.
+- If asked who built, owns, created, or is behind LexAI, answer plainly that LexAI was built by Dasmart.`;
 
 function teachCaseSystemPrompt(depth){
   const d = depth || "100-level law student";
@@ -2910,7 +3074,8 @@ Rules:
 - Facts should be concise — the material facts only, not a full recitation.
 - Ratio Decidendi should isolate the actual binding principle, distinct from obiter commentary.
 - After the brief, add a line containing exactly ---NOTES--- followed by a short list of anything uncertain, recalled from general knowledge rather than a source document, or worth the student double-checking.
-- If the person then asks a follow-up (e.g. "what did I miss", "explain the ratio further", "how does this compare to X case"), answer conversationally and do not repeat the whole brief unless they ask you to regenerate it.`;
+- If the person then asks a follow-up (e.g. "what did I miss", "explain the ratio further", "how does this compare to X case"), answer conversationally and do not repeat the whole brief unless they ask you to regenerate it.
+- If asked who built, owns, created, or is behind LexAI, answer plainly that LexAI was built by Dasmart.`;
 
 const IRAC_SYSTEM_PROMPT = `You are LexAI's IRAC analyzer — helping a law student practice legal issue-spotting and structured analysis on a fact pattern they provide.
 
@@ -2925,7 +3090,8 @@ Rules:
 - If the fact pattern raises more than one issue, number them (Issue 1, Issue 2, ...) and run each through Rule/Application/Conclusion in turn.
 - Never fabricate a case citation or statutory section; if a real one isn't confidently known, describe the rule generally instead (e.g. "the general test for negligence" rather than inventing a case name).
 - After the analysis, add a line containing exactly ---NOTES--- followed by 1-3 short prompts (not answers) about issues or angles the student might want to double-check themselves — phrase these as questions or nudges, in the spirit of Socratic teaching, not as the answer handed to them.
-- If the person asks "what did I miss" or similar, help them find gaps in their OWN reasoning with guiding questions rather than just supplying the missing analysis outright.`;
+- If the person asks "what did I miss" or similar, help them find gaps in their OWN reasoning with guiding questions rather than just supplying the missing analysis outright.
+- If asked who built, owns, created, or is behind LexAI, answer plainly that LexAI was built by Dasmart.`;
 
 function studyModeLabel(mode){
   return { flashcards: "Flashcards", quiz: "Quiz", tutor: "Tutor", brief: "Case Brief", irac: "IRAC Analysis" }[mode] || mode;
@@ -2962,7 +3128,7 @@ function extractJson(raw){
 }
 
 function studyLoadingHtml(label){
-  return `<div class="thinking-row" style="padding:0;"><div class="gavel-loader"><svg viewBox="0 0 36 36" fill="currentColor"><g transform="rotate(-32 18 15)"><rect x="9" y="4" width="17" height="8" rx="2.6"/><rect x="14.7" y="12" width="5.6" height="17" rx="2.6"/></g><rect x="5" y="29.5" width="15" height="4.2" rx="2.1"/></svg></div><div class="thinking-label">${label}</div></div>`;
+  return `<div class="thinking-row" style="padding:0;"><div class="gavel-loader"><svg viewBox="0 0 36 36" fill="currentColor"><g class="gavel-swing"><g transform="rotate(-32 18 15)"><rect x="9" y="4" width="17" height="8" rx="2.6"/><rect x="14.7" y="12" width="5.6" height="17" rx="2.6"/></g></g><rect x="5" y="29.5" width="15" height="4.2" rx="2.1"/></svg></div><div class="thinking-label">${label}</div></div>`;
 }
 
 function openStudySession(deck){
@@ -3255,7 +3421,7 @@ function renderTutorInner(){
         </div>`;
     } else {
       row.className = "msg-row assistant";
-      let inner = `<div class="assistant-label"><svg width="13" height="13" viewBox="0 0 36 36" fill="currentColor" class="assistant-mark${m.streaming ? ' thinking' : ''}"><g transform="rotate(-38 18 15)"><rect x="9" y="4" width="17" height="8" rx="2.6"/><rect x="14.7" y="12" width="5.6" height="17" rx="2.6"/></g><rect x="5" y="29.5" width="15" height="4.2" rx="2.1"/></svg><span class="assistant-name">Lex Tutor</span></div>`;
+      let inner = `<div class="assistant-label"><svg width="13" height="13" viewBox="0 0 36 36" fill="currentColor" class="assistant-mark${m.streaming ? ' thinking' : ''}"><g class="gavel-swing"><g transform="rotate(-38 18 15)"><rect x="9" y="4" width="17" height="8" rx="2.6"/><rect x="14.7" y="12" width="5.6" height="17" rx="2.6"/></g></g><rect x="5" y="29.5" width="15" height="4.2" rx="2.1"/></svg><span class="assistant-name">Lex Tutor</span></div>`;
       if(m.streaming || m.thinking){
         inner += renderThinkBlockHtml(i, m.thinking, !!m.streaming, m.thinkSeconds);
       }
@@ -3278,7 +3444,7 @@ function renderTutorInner(){
   if(loading && !(lastMsg && lastMsg.role === "assistant" && lastMsg.streaming)){
     const row = document.createElement("div");
     row.className = "thinking-row";
-    row.innerHTML = `<div class="gavel-loader"><svg viewBox="0 0 36 36" fill="currentColor"><g transform="rotate(-32 18 15)"><rect x="9" y="4" width="17" height="8" rx="2.6"/><rect x="14.7" y="12" width="5.6" height="17" rx="2.6"/></g><rect x="5" y="29.5" width="15" height="4.2" rx="2.1"/></svg></div><div class="thinking-label">Thinking…</div>`;
+    row.innerHTML = `<div class="gavel-loader"><svg viewBox="0 0 36 36" fill="currentColor"><g class="gavel-swing"><g transform="rotate(-32 18 15)"><rect x="9" y="4" width="17" height="8" rx="2.6"/><rect x="14.7" y="12" width="5.6" height="17" rx="2.6"/></g></g><rect x="5" y="29.5" width="15" height="4.2" rx="2.1"/></svg></div><div class="thinking-label">Thinking…</div>`;
     wrap.appendChild(row);
   }
   wireMessageActions(wrap);
@@ -3387,7 +3553,7 @@ function renderBriefChatInner(){
         </div>`;
     } else {
       row.className = "msg-row assistant";
-      let inner = `<div class="assistant-label"><svg width="13" height="13" viewBox="0 0 36 36" fill="currentColor" class="assistant-mark${m.streaming ? ' thinking' : ''}"><g transform="rotate(-38 18 15)"><rect x="9" y="4" width="17" height="8" rx="2.6"/><rect x="14.7" y="12" width="5.6" height="17" rx="2.6"/></g><rect x="5" y="29.5" width="15" height="4.2" rx="2.1"/></svg><span class="assistant-name">LexAI</span></div>`;
+      let inner = `<div class="assistant-label"><svg width="13" height="13" viewBox="0 0 36 36" fill="currentColor" class="assistant-mark${m.streaming ? ' thinking' : ''}"><g class="gavel-swing"><g transform="rotate(-38 18 15)"><rect x="9" y="4" width="17" height="8" rx="2.6"/><rect x="14.7" y="12" width="5.6" height="17" rx="2.6"/></g></g><rect x="5" y="29.5" width="15" height="4.2" rx="2.1"/></svg><span class="assistant-name">LexAI</span></div>`;
       if(m.streaming || m.thinking){
         inner += renderThinkBlockHtml(i, m.thinking, !!m.streaming, m.thinkSeconds);
       }
@@ -3435,7 +3601,7 @@ function renderBriefChatInner(){
   if(loading && !(lastMsg && lastMsg.role === "assistant" && lastMsg.streaming)){
     const row = document.createElement("div");
     row.className = "thinking-row";
-    row.innerHTML = `<div class="gavel-loader"><svg viewBox="0 0 36 36" fill="currentColor"><g transform="rotate(-32 18 15)"><rect x="9" y="4" width="17" height="8" rx="2.6"/><rect x="14.7" y="12" width="5.6" height="17" rx="2.6"/></g><rect x="5" y="29.5" width="15" height="4.2" rx="2.1"/></svg></div><div class="thinking-label">Thinking…</div>`;
+    row.innerHTML = `<div class="gavel-loader"><svg viewBox="0 0 36 36" fill="currentColor"><g class="gavel-swing"><g transform="rotate(-32 18 15)"><rect x="9" y="4" width="17" height="8" rx="2.6"/><rect x="14.7" y="12" width="5.6" height="17" rx="2.6"/></g></g><rect x="5" y="29.5" width="15" height="4.2" rx="2.1"/></svg></div><div class="thinking-label">Thinking…</div>`;
     wrap.appendChild(row);
   }
   document.getElementById("briefView").scrollTop = document.getElementById("briefView").scrollHeight;
