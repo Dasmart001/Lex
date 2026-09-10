@@ -1223,13 +1223,14 @@ const SYSTEM_PROMPT = `You are LexAI, an AI legal research assistant built for l
 
 Voice and reasoning:
 - Be thoughtful, precise, and calm. Give the direct answer first, then the brief reasoning behind it.
-- Think through complex legal questions step by step, breaking multi-part issues into logical components rather than jumping to a conclusion.
+- For any non-trivial legal question, reason through it in this order before answering: (1) identify the actual legal issue(s) being asked, (2) identify what authority governs it (statute, case law, constitutional provision), (3) apply that authority to the specific facts given, (4) consider whether there's a reasonable counterargument or an unsettled point, (5) only then state the conclusion. Don't skip straight to a conclusion on a multi-part issue.
+- Before finalizing an answer that names a case, statute, or section, check it against what you actually retrieved this turn (when search was used) or against your own confidence level (when it wasn't) — if you're not genuinely sure it's real, say so rather than stating it as settled fact.
 - Be transparent about uncertainty — prefer accuracy and nuance over overconfident simplicity. If a question turns on unsettled or jurisdiction-specific law, say so.
 - Ask a concise clarifying question only when the request is genuinely ambiguous; otherwise proceed with the most reasonable reading.
 
 How you respond:
 - Be precise and structured. Use short paragraphs; use headings or bullet points only for genuinely multi-part answers (e.g. Facts, Issue, Holding, Ratio Decidendi when discussing a case).
-- When you reference case law, statutes, or sections, name them plainly (e.g. "Section 36 of the 1999 Constitution (as amended)") but be clear you are recalling this from general training knowledge, not a live, verified case database — you do not have real-time access to a case law corpus in this demo.
+- When search was used this turn, base case names, statutes, and sections on what search actually returned, and cite them as such. When search was not used (or turned up nothing relevant), you're relying on general training knowledge — be clear about that distinction and more cautious about precise citations, since you don't have a live verified case database backing every claim.
 - Distinguish clearly between settled legal principle and areas of genuine judicial disagreement.
 - Never fabricate a citation, case name, or section number. If you are not confident one exists, say so plainly rather than inventing one.
 - Keep tone warm, polished, and professional — direct and useful to a working lawyer, skipping filler and disclaimers except where a real ambiguity or risk exists.
@@ -1760,7 +1761,7 @@ function renderThreadInner(){
   saveThreads();
 }
 
-async function callClaude(threadMessages, systemPrompt, useSearch){
+async function callClaude(threadMessages, systemPrompt, useSearch, reasoningEffort = "high"){
   const payload = threadMessages.map(m => ({
     role: m.role,
     content: m.content,
@@ -1773,6 +1774,7 @@ async function callClaude(threadMessages, systemPrompt, useSearch){
       system: systemPrompt || SYSTEM_PROMPT,
       messages: payload,
       useSearch: !!useSearch,
+      reasoningEffort,
     }),
   });
   const data = await response.json();
@@ -1791,7 +1793,7 @@ async function callClaude(threadMessages, systemPrompt, useSearch){
 // real value (drafting). Calls onThought(chunk) as reasoning tokens arrive
 // and onText(chunk) as answer tokens arrive, then resolves with the full
 // { text, thinking, sources } once the stream closes.
-async function callClaudeStream(threadMessages, systemPrompt, useSearch, onThought, onText){
+async function callClaudeStream(threadMessages, systemPrompt, useSearch, onThought, onText, reasoningEffort = "high"){
   const payload = threadMessages.map(m => ({
     role: m.role,
     content: m.content,
@@ -1805,6 +1807,7 @@ async function callClaudeStream(threadMessages, systemPrompt, useSearch, onThoug
       messages: payload,
       useSearch: !!useSearch,
       stream: true,
+      reasoningEffort,
     }),
   });
 
@@ -2074,7 +2077,7 @@ async function runResearchStream(t, usedSearch){
     delete placeholder.streaming;
   } catch(e){
     endThinkTimer();
-    t.messages[idx] = { role: "assistant", content: "Something went wrong reaching the AI service. Please try again in a moment.", isError: true };
+    t.messages[idx] = { role: "assistant", content: friendlyErrorText(e), isError: true };
   } finally {
     loading = false;
     renderThreadInner();
@@ -2220,7 +2223,7 @@ function wireMessageActions(container){
       try{
         session.messages.push(await session.regenerate(session.messages));
       } catch(e){
-        session.messages.push({ role: "assistant", content: "Something went wrong reaching the AI service. Please try again in a moment.", isError: true });
+        session.messages.push({ role: "assistant", content: friendlyErrorText(e), isError: true });
       } finally {
         loading = false;
         session.render();
@@ -2277,7 +2280,7 @@ function wireUserActions(container){
       try{
         session.messages.push(await session.regenerate(session.messages));
       } catch(e){
-        session.messages.push({ role: "assistant", content: "Something went wrong reaching the AI service. Please try again in a moment.", isError: true });
+        session.messages.push({ role: "assistant", content: friendlyErrorText(e), isError: true });
       } finally {
         loading = false;
         session.render();
@@ -2459,6 +2462,17 @@ function updateSendStates(){
 function autoGrow(el){
   el.style.height = "auto";
   el.style.height = Math.min(el.scrollHeight, 160) + "px";
+}
+
+// Show the *real* reason a request failed (quota, bad model name, blocked
+// content, etc.) instead of a black-box generic message — this is what the
+// backend's stream/JSON error field is for. Falls back to generic text
+// only if no detail came through at all.
+function friendlyErrorText(e){
+  const detail = (e && e.message) ? String(e.message).trim() : "";
+  return detail
+    ? `Something went wrong reaching the AI service: ${detail}`
+    : "Something went wrong reaching the AI service. Please try again in a moment.";
 }
 
 const homeInput = document.getElementById("homeInput");
@@ -2648,7 +2662,7 @@ async function handleVoiceUtterance(text){
     speakVoiceReply(reply.text);
   } catch(e){
     loading = false;
-    t.messages.push({ role: "assistant", content: "Something went wrong reaching the AI service.", isError: true });
+    t.messages.push({ role: "assistant", content: friendlyErrorText(e), isError: true });
     renderThreadInner();
     setVoiceState("idle", "Tap the mic to try again");
   }
@@ -3372,7 +3386,8 @@ async function generateStudySet(topic, type){
           finishStudyThinking(containerId);
           stageEl.innerHTML = studyLoadingHtml(type === "flashcards" ? "Building flashcards…" : "Building your quiz…");
         }
-      }
+      },
+      "low"
     );
     finishStudyThinking(containerId);
     const parsed = extractJson(reply.text);
@@ -3523,7 +3538,7 @@ async function sendTutorMessage(text, isFirst){
     delete placeholder.streaming;
   } catch(e){
     endThinkTimer();
-    deck.messages[idx] = { role: "assistant", content: "Something went wrong reaching the AI service. Please try again.", isError: true };
+    deck.messages[idx] = { role: "assistant", content: friendlyErrorText(e), isError: true };
   } finally {
     loading = false;
     renderTutorInner();
